@@ -194,7 +194,7 @@ async function generatePdfSerahTerima(){
   const mergedBytes = await mergedPdf.save();
   const mergedBlob  = new Blob([mergedBytes], { type:'application/pdf' });
   const url = URL.createObjectURL(mergedBlob);
-  const a = document.createElement('a'); a.href=url; a.download='Form_Terima_CM_merged.pdf'; a.click();
+  const a = document.createElement('a'); a.href=url; a.download='Form CM merged.pdf'; a.click();
   URL.revokeObjectURL(url);
 }
 

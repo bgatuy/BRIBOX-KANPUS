@@ -89,7 +89,7 @@ body[data-page="serah"] .controls-bar {
 .form-group select,
 .form-group input[type="date"] {
   max-width:180px; width:100%; font-size:13px;
-  text-align:center; text-align-last:center;
+  text-align:left; text-align-last:center;
 }
 label { font-weight:600; }
 input[type="file"], select, pre,
