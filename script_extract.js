@@ -1,4 +1,4 @@
-// ====== Trackmate Extractor (FINAL) ======
+// ====== Trackmate ======
 
 // (Opsional) Set worker untuk pdf.js biar gak warning "GlobalWorkerOptions.workerSrc"
 if (window.pdfjsLib && (!pdfjsLib.GlobalWorkerOptions.workerSrc || pdfjsLib.GlobalWorkerOptions.workerSrc === '')) {
@@ -92,17 +92,54 @@ function formatTanggalIndonesia(tanggal) {
   return `${dd} ${bulan[parseInt(mm,10)-1]} ${yyyy}`;
 }
 function extractFlexibleBlock(lines, startLabel, stopLabels = []) {
-  const startIndex = lines.findIndex(line => line.toLowerCase().includes(startLabel.toLowerCase()));
-  if (startIndex === -1) return '';
-  let result = '';
-  for (let i = startIndex + 1; i < lines.length; i++) {
-    const line = lines[i].trim();
-    if (!line) continue;
-    if (stopLabels.some(label => line.toLowerCase().includes(label.toLowerCase()))) break;
-    result += ' ' + line;
+  const norm = s => (s || '')
+    .replace(/[\u00A0\u2007\u202F]/g, ' ')   // NBSP family -> space
+    .replace(/\s+/g, ' ')
+    .trim();
+
+  // gabung jadi satu string biar bisa "potong di tengah baris"
+  const text = (lines || []).map(x => x || '').join('\n');
+
+  // cari "startLabel :"
+  const startRe = new RegExp(`${startLabel}\\s*:\\s*`, 'i');
+  const mStart  = startRe.exec(text);
+  if (!mStart) return '';
+
+  const tail = text.slice(mStart.index + mStart[0].length);
+
+  // susun pola stopper
+  const stopParts = [];
+
+  // 1) stop-label dengan titik dua (di mana pun)
+  for (const lbl of stopLabels) {
+    stopParts.push(`${lbl}\\s*:\\s*`);
   }
-  return result.replace(/\s+/g, ' ').trim();
+
+  // 2) khusus "Tanggal" tanpa titik dua tapi langsung tanggal
+  if (stopLabels.some(s => /^tanggal$/i.test(s))) {
+    stopParts.push(`Tanggal(?:\\s*Tiket)?\\s+\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4}`);
+  }
+
+  // 3) khusus "Kantor Cabang" telanjang (bukan bagian dari "Kantor Cabang Khusus" di awal nilai)
+  if (stopLabels.some(s => /^kantor\\s*cabang$/i.test(s))) {
+    // potong kalau muncul "Kantor Cabang" TANPA ":" dan BUKAN posisi awal nilai
+    stopParts.push(`(?<!^)Kantor\\s*Cabang(?!\\s*:)`);
+  }
+
+  // 4) generic: field lain di awal baris: "X : ..."
+  stopParts.push(`[\\r\\n]+[A-Za-z][A-Za-z/() ]+\\s*:\\s*`);
+
+  const stopPattern = stopParts.join('|');
+
+  // ambil minimal sampai sebelum stopper apa pun
+  const cutRe = new RegExp(`([\\s\\S]*?)(?=${stopPattern})`, 'i');
+  const mCut  = cutRe.exec(tail);
+
+  const captured = mCut ? mCut[1] : tail;
+
+  return norm(captured);
 }
+
 
 /* ========= State ========= */
 let unitKerja = "-", kantorCabang = "-", tanggalFormatted = "-", tanggalRaw = "",

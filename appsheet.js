@@ -1,4 +1,4 @@
-// ===== AppSheet Extractor (FINAL) =====
+// ===== AppSheet =====
 
 // (Opsional) Set worker PDF.js
 if (window.pdfjsLib && (!pdfjsLib.GlobalWorkerOptions.workerSrc || pdfjsLib.GlobalWorkerOptions.workerSrc === '')) {
