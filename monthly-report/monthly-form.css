@@ -183,7 +183,7 @@ body.dark-mode[data-page="monthly"]{
 body.dark-mode[data-page="monthly"] input,
 body.dark-mode[data-page="monthly"] select,
 body.dark-mode[data-page="monthly"] textarea{
-  background: #444;       /* gray-900 */
+  background: #444;       /* gray-800/900 look */
   color: #e5e7eb;
   border-color: #374151;
 }
@@ -235,16 +235,37 @@ body.dark-mode[data-page="monthly"] .card{
 
 /* Phone ↓: 1 kolom + tombol stack rapi */
 @media (max-width:768px){
+  /* field jadi 1 kolom */
   body[data-page="monthly"] .grid{ grid-template-columns:1fr; }
   body[data-page="monthly"]{
     --gap-x:12px; --gap-y:12px; --ctl-font:12px;
   }
+  /* toolbar umum tetap fleksibel */
   body[data-page="monthly"] .toolbar{ gap:8px; }
   body[data-page="monthly"] .toolbar-left,
   body[data-page="monthly"] .toolbar-right{
     width:100%; justify-content:space-between;
   }
-  /* biar Lihat Data nemplok kanan, tombol kiri tetap di kiri */
-  body[data-page="monthly"] .toolbar-right .btn{ margin-left:auto; }
-html { font-size:12px; }
+
+  /* ====== Bottom actions: Simpan, Reset, Lihat Data ====== */
+  /* Jika tombol-tombol dibungkus .btn-row (global), atur jadi grid */
+  body[data-page="monthly"] .btn-row{
+    display:grid;
+    grid-template-columns: repeat(2, 1fr);  /* Simpan & Reset sejajar */
+    gap:10px;
+    align-items:stretch;
+    justify-items:stretch;
+    margin-top:16px;
+  }
+  body[data-page="monthly"] .btn-row .btn,
+  body[data-page="monthly"] .btn-row a.btn{
+    width:100%;
+    min-height:42px;                          /* tinggi seragam */
+    margin:0;                                 /* netralisir margin luar */
+  }
+  /* Tombol ke-3 (Lihat Data) full width di bawah */
+  body[data-page="monthly"] .btn-row .btn:nth-child(3),
+  body[data-page="monthly"] .btn-row a.btn:nth-child(3){
+    grid-column: 1 / -1;
+  }
 }
