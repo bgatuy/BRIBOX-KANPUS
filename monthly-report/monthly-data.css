@@ -189,6 +189,7 @@ body.dark-mode[data-page="monthly"] .card{
 
   body[data-page="monthly"] .search-input{ width:100%; }
   body[data-page="monthly"] .tablewrap{ max-height:calc(100vh - 280px); }
+  html { font-size:12px; }
 }
 
 /* Tombol hapus seragam dengan style form serah terima */

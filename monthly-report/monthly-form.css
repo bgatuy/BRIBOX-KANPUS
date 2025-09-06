@@ -234,7 +234,7 @@ body.dark-mode[data-page="monthly"] .card{
 }
 
 /* Phone ↓: 1 kolom + tombol stack rapi */
-@media (max-width:720px){
+@media (max-width:768px){
   body[data-page="monthly"] .grid{ grid-template-columns:1fr; }
   body[data-page="monthly"]{
     --gap-x:12px; --gap-y:12px; --ctl-font:12px;
@@ -246,4 +246,5 @@ body.dark-mode[data-page="monthly"] .card{
   }
   /* biar Lihat Data nemplok kanan, tombol kiri tetap di kiri */
   body[data-page="monthly"] .toolbar-right .btn{ margin-left:auto; }
+html { font-size:12px; }
 }
