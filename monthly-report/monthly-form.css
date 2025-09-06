@@ -233,39 +233,43 @@ body.dark-mode[data-page="monthly"] .card{
   }
 }
 
-/* Phone ↓: 1 kolom + tombol stack rapi */
+/* ====== Bottom actions: Simpan, Reset, Lihat Data (Mobile) ====== */
 @media (max-width:768px){
-  /* field jadi 1 kolom */
-  body[data-page="monthly"] .grid{ grid-template-columns:1fr; }
-  body[data-page="monthly"]{
-    --gap-x:12px; --gap-y:12px; --ctl-font:12px;
-  }
-  /* toolbar umum tetap fleksibel */
-  body[data-page="monthly"] .toolbar{ gap:8px; }
-  body[data-page="monthly"] .toolbar-left,
-  body[data-page="monthly"] .toolbar-right{
-    width:100%; justify-content:space-between;
-  }
+  /* samain tinggi tombol mobile */
+  body[data-page="monthly"]{ --btn-h:38px; }
 
-  /* ====== Bottom actions: Simpan, Reset, Lihat Data ====== */
-  /* Jika tombol-tombol dibungkus .btn-row (global), atur jadi grid */
+  /* Simpan & Reset sejajar 2 kolom */
   body[data-page="monthly"] .btn-row{
     display:grid;
-    grid-template-columns: repeat(2, 1fr);  /* Simpan & Reset sejajar */
+    grid-template-columns: repeat(2, 1fr);
     gap:10px;
     align-items:stretch;
     justify-items:stretch;
     margin-top:16px;
   }
+
+  /* semua tombol proporsional */
   body[data-page="monthly"] .btn-row .btn,
   body[data-page="monthly"] .btn-row a.btn{
     width:100%;
-    min-height:42px;                          /* tinggi seragam */
-    margin:0;                                 /* netralisir margin luar */
+    min-height:var(--btn-h);
+    margin:0;
   }
-  /* Tombol ke-3 (Lihat Data) full width di bawah */
+
+  /* Lihat Data → center, ukuran proporsional (nggak full width) */
   body[data-page="monthly"] .btn-row .btn:nth-child(3),
   body[data-page="monthly"] .btn-row a.btn:nth-child(3){
     grid-column: 1 / -1;
+    justify-self: center;
+    width: min(240px, 80%);
   }
 }
+
+/* HP mungil banget → biarin full width biar gampang tap */
+@media (max-width:360px){
+  body[data-page="monthly"] .btn-row .btn:nth-child(3),
+  body[data-page="monthly"] .btn-row a.btn:nth-child(3){
+    width:100%;
+  }
+}
+
