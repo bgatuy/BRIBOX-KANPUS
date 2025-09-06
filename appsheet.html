@@ -19,6 +19,22 @@
         <a href="index.html">📋 Trackmate</a>
         <a href="appsheet.html" class="active">📋 AppSheet</a>
         <a href="formserahterima.html">📝 Form Serah Terima</a>
+        <!-- Parent collapsible Monthly Report -->
+        <button class="nav-group" type="button"
+        aria-controls="nav-monthly" aria-expanded="false"
+        onclick="
+        const t=this, m=document.getElementById('nav-monthly');
+        const ex=t.getAttribute('aria-expanded')==='true';
+        t.setAttribute('aria-expanded', String(!ex)); 
+        m.hidden=ex;
+      ">
+      📅 Monthly Report
+    </button>
+
+      <!-- Submenu Monthly -->
+      <div id="nav-monthly" class="submenu" hidden>
+        <a href="monthly-report/monthly-form.html">Monthly Report Form</a>
+        <a href="monthly-report/monthly-data.html">Monthly Report Data</a>
       </nav>
     </aside>
 
