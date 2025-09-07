@@ -220,3 +220,58 @@ body.dark-mode[data-page="monthly"] .card{ box-shadow:0 2px 10px rgba(0,0,0,.35)
 
 /* Guard layout utama */
 body[data-page="monthly"] .dashboard .main{ min-width:0; }
+
+/* =========================================================
+   iOS-ONLY PATCH — Monthly Data
+   Rapihin tombol & search tanpa ngubah ukuran Android
+   ========================================================= */
+@supports (-webkit-touch-callout: none) {
+
+  /* Search input: tinggi & font konsisten, anti zoom iOS */
+  body[data-page="monthly"] .search-input{
+    -webkit-appearance: none;
+    appearance: none;
+    font-size: 16px !important;   /* cegah auto-zoom */
+    height: 42px !important;      /* match desain kamu */
+    line-height: 42px !important; /* vertikal center */
+  }
+
+  /* Grid tombol: paksa iOS patuh 2 kolom + Tambah Data di baris sendiri */
+  @media (max-width: 768px){
+    body[data-page="monthly"] .controls{ justify-content: flex-start; }
+
+    body[data-page="monthly"] .controls-right{
+      display: grid !important;
+      grid-template-columns: 1fr 1fr !important;
+      gap: 12px !important;
+      width: 100% !important;
+      align-items: stretch !important;
+      justify-items: stretch !important;
+    }
+
+    body[data-page="monthly"] .controls-right .btn{
+      height: var(--btn-h) !important;     /* kunci tinggi = 40px (variabelmu) */
+      min-height: var(--btn-h) !important;
+      padding: 0 var(--btn-pad-x) !important;
+      line-height: 1 !important;           /* biar gak “melar” */
+      margin: 0 !important;
+    }
+
+    /* Tambah Data = satu baris sendiri, center — sesuai Android */
+    body[data-page="monthly"] .controls-right .btn.info{
+      grid-column: 1 / -1 !important;
+      justify-self: center !important;
+      width: min(240px, 80%) !important;
+    }
+  }
+
+  /* Sticky header anti “celah” di iOS (penguat) */
+  body[data-page="monthly"] .table thead tr.h1 th{
+    position: sticky; top: 0; z-index: 3;
+  }
+  body[data-page="monthly"] .table thead tr.h2 th{
+    position: sticky;
+    top: var(--th-h1); z-index: 4;
+    margin-top: -1px;  /* rapetin border */
+  }
+}
