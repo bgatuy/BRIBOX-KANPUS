@@ -231,7 +231,7 @@
 
       // Title
       ws.mergeCells('A1:P1');
-      const cTitle=ws.getCell('A1'); cTitle.value=title; cTitle.alignment={horizontal:'center',vertical:'middle'}; cTitle.font={bold:true,size:14};
+      const cTitle=ws.getCell('A1'); cTitle.value=title; cTitle.alignment={horizontal:'center',vertical:'middle'}; cTitle.font={bold:true,size:18};
 
       // Header 2 baris
       ws.mergeCells('A3','A4'); ws.getCell('A3').value='Tanggal';
