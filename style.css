@@ -402,9 +402,9 @@ body[data-page="serah"] .controls-right.btn-row { gap:10px; margin:0; }
     border: 1px solid #e5e7eb !important;
     border-radius: 10px !important;
 
-    height: 40px !important;          /* FIX ukuran */
+    height: 20px !important;          /* FIX ukuran */
     padding: 0 12px !important;        /* tanpa padding vertikal */
-    line-height: 40px !important;      /* teks center vertikal */
+    line-height: 20px !important;      /* teks center vertikal */
     font-size: 16px !important;        /* anti-zoom iOS */
     color: #111 !important;
   }
@@ -418,9 +418,9 @@ body[data-page="serah"] .controls-right.btn-row { gap:10px; margin:0; }
   body[data-page="serah"] input[type="date"]{
     -webkit-appearance: none;
     appearance: none;
-    height: 44px !important;           /* match Android */
+    height: 40px !important;           /* match Android */
     padding: 0 12px !important;
-    line-height: 44px !important;      /* center */
+    line-height: 40px !important;      /* center */
     font-size: 16px !important;        /* anti-zoom */
     text-align: center;
     background:#fff;
