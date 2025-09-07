@@ -286,7 +286,7 @@ body.dark-mode[data-page="monthly"] .card{
     height: var(--ctl-h) !important;         /* = 44px dari variabelmu */
     padding: 0 var(--ctl-pad-x) !important;  /* horizontal saja */
     line-height: var(--ctl-h) !important;    /* center vertikal */
-    font-size: 12px !important;              /* anti-zoom */
+    font-size: 13px !important;              /* anti-zoom */
     text-align: center;
     /* sedikit buffer supaya tidak tampak "mepet atas" di beberapa iOS */
     padding-top: 1px !important;
