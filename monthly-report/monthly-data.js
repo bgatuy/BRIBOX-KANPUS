@@ -100,6 +100,14 @@
 
   const esc = (s)=> String(s).replace(/[&<>"']/g,(m)=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;","'":"&#39;"}[m]));
 
+  // dekat fungsi esc, sebelum renderTable
+function fmtJam(v){
+  if (v == null || v === "") return "";
+  const m = String(v).match(/^(\d{1,2}):(\d{2})$/);
+  if (!m) return String(v);            // bukan "HH:MM", balikin apa adanya
+  return `${parseInt(m[1], 10)}:${m[2]}`;  // 07:05 -> 7:05, 0:05 -> 0:05
+}
+
   function renderTable(rows){
   if(!tbody) return;
   tbody.innerHTML = rows.map(r=>`
@@ -111,11 +119,11 @@
       <td>${esc(r.jenis||"-")}</td>
       <td>${esc(r.detail||"-")}</td>
       <td>${esc(r.status||"-")}</td>
-      <td>${esc(r.jamMasuk||"")}</td>
-      <td>${esc(r.jamBerangkat||"")}</td>
-      <td>${esc(r.jamTiba||"")}</td>
-      <td>${esc(r.jamMulai||"")}</td>
-      <td>${esc(r.jamSelesai||"")}</td>
+      <td>${esc(fmtJam(r.jamMasuk))}</td>
+      <td>${esc(fmtJam(r.jamBerangkat))}</td>
+      <td>${esc(fmtJam(r.jamTiba))}</td>
+      <td>${esc(fmtJam(r.jamMulai))}</td>
+      <td>${esc(fmtJam(r.jamSelesai))}</td>
       <td>${esc(r.durasiPenyelesaianStr||"0:00")}</td>
       <td class="num">${r.jarakKm||0}</td>
       <td>${esc(r.waktuTempuhStr||"0:00")}</td>
