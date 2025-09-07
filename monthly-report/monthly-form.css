@@ -324,6 +324,3 @@ body.dark-mode[data-page="monthly"] .card{
   /* jaga supaya field gak melar */
   body[data-page="monthly"] .field{ min-width: 0; }
 }
-
-
-
