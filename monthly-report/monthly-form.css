@@ -263,6 +263,11 @@ body.dark-mode[data-page="monthly"] .card{
     justify-self: center;
     width: min(240px, 80%);
   }
+
+  body[data-page="monthly"] .grid{
+    grid-template-columns: 1fr !important;  /* ini kuncinya */
+  }
+  body[data-page="monthly"] .field{ min-width: 0; } /* biar gak melar */
 }
 
 /* HP mungil banget → biarin full width biar gampang tap */

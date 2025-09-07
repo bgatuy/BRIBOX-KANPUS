@@ -182,6 +182,38 @@
     p.setAttribute('aria-expanded', hasActive?'true':'false');
     m.hidden=!hasActive;
   })();
+
+  document.addEventListener('DOMContentLoaded', () => {
+  if (document.body.dataset.page !== 'monthly') return;
+
+  // cari grid form utama
+  const grid = document.querySelector('body[data-page="monthly"] .grid');
+  if (!grid) return;
+
+  // helper: cari .field berdasarkan teks label (span pertama di dalam .field)
+  const findFieldByLabel = (txt) => {
+    const fields = grid.querySelectorAll('.field');
+    const norm = s => s.replace(/\s+/g,' ').trim().toLowerCase();
+    const want = norm(txt);
+    return Array.from(fields).find(f => {
+      const sp = f.querySelector(':scope > span');
+      return sp && norm(sp.textContent) === want;
+    });
+  };
+
+  // target yang mau ditukar
+  const fBerangkat = findFieldByLabel('Jam Berangkat');
+  const fLaporan  = findFieldByLabel('Jam Masuk Laporan (auto)');
+
+  if (fBerangkat && fLaporan && fBerangkat !== fLaporan) {
+    // swap posisi node di dalam grid (tanpa clone → event/listener tetap aman)
+    const placeholder = document.createElement('div');
+    grid.insertBefore(placeholder, fBerangkat);
+    grid.replaceChild(fBerangkat, fLaporan);
+    grid.insertBefore(fLaporan, placeholder);
+    grid.removeChild(placeholder);
+  }
+});
   </script>
   <script src="monthly-form.js"></script>
 </body>
