@@ -1,3 +1,8 @@
+/* ====== Tap highlight reset (Mobile Safari/Chrome) ====== */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
 /* =========================
    RESET & BASE
 ========================= */
