@@ -277,24 +277,3 @@ body.dark-mode[data-page="monthly"] .card{
     width:100%;
   }
 }
-
-/* ===== iOS PATCH: tanggal & waktu rapi di Monthly Form ===== */
-@supports (-webkit-touch-callout: none) {
-  body[data-page="monthly"] input[type="date"],
-  body[data-page="monthly"] input[type="time"],
-  body[data-page="serah"] input[type="date"] {
-    -webkit-appearance: none;
-    appearance: none;
-    font-size: 16px;
-    min-height: 44px;   /* bikin tinggi seragam meski kosong */
-    padding: 0 12px;
-    text-align: center;
-  }
-  body[data-page="monthly"] input[type="date"]::-webkit-date-and-time-value,
-  body[data-page="monthly"] input[type="time"]::-webkit-date-and-time-value,
-  body[data-page="serah"] input[type="date"]::-webkit-date-and-time-value {
-    text-align: center;
-  }
-}
-
-
