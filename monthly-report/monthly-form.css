@@ -278,34 +278,22 @@ body.dark-mode[data-page="monthly"] .card{
   }
 }
 
-/* ===== iOS-ONLY PATCH — Monthly Form (rapihin date/time tanpa ubah ukuran) ===== */
+/* ===== iOS-ONLY (Safari) — Monthly Form: Tanggal rapi ===== */
 @supports (-webkit-touch-callout: none) {
-  body[data-page="monthly"] input[type="date"],
-  body[data-page="monthly"] input[type="time"]{
+  body[data-page="monthly"] input[type="date"]{
     -webkit-appearance: none;
     appearance: none;
-    /* iOS suka nge-zoom kalau <16px; biar aman tapi gak nambah tinggi */
-    font-size: 16px !important;
-    /* jangan paksa height fix; biarkan ikuti Android, tapi cegah “ciut” */
-    height: auto !important;
-    min-height: var(--ctl-h) !important;      /* pakai tinggi standar form kamu */
-    padding: 0 var(--ctl-pad-x) !important;   /* follow spacing variabelmu */
-    line-height: normal !important;
+    height: var(--ctl-h) !important;         /* = 44px dari variabelmu */
+    padding: 0 var(--ctl-pad-x) !important;  /* horizontal saja */
+    line-height: var(--ctl-h) !important;    /* center vertikal */
+    font-size: 16px !important;              /* anti-zoom */
     text-align: center;
-    /* ruang buat ikon picker di iOS */
-    padding-right: 36px !important;
+    /* sedikit buffer supaya tidak tampak "mepet atas" di beberapa iOS */
+    padding-top: 1px !important;
   }
-
-  /* Pusatkan value renderer bawaannya WebKit (iOS) */
-  body[data-page="monthly"] input[type="date"]::-webkit-date-and-time-value,
-  body[data-page="monthly"] input[type="time"]::-webkit-date-and-time-value{
+  body[data-page="monthly"] input[type="date"]::-webkit-date-and-time-value{
     text-align: center;
-  }
-
-  /* Rapihin indikator kalender bawaan iOS */
-  body[data-page="monthly"] input[type="date"]::-webkit-calendar-picker-indicator,
-  body[data-page="monthly"] input[type="time"]::-webkit-calendar-picker-indicator{
-    margin-right: 6px;
   }
 }
+
 

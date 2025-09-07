@@ -386,50 +386,47 @@ body[data-page="serah"] .controls-right.btn-row { gap:10px; margin:0; }
   padding: 6px 12px;        /* ruang dalam item */
 }
 
-/* =========================================================
-   iOS-ONLY PATCH — rapiin tanpa ubah ukuran Android/Desktop
-   Tempelkan block ini DI PALING BAWAH file style.css
-   ========================================================= */
+/* ===== iOS-ONLY (Safari iPhone/iPad) ===== */
 @supports (-webkit-touch-callout: none) {
 
-  /* --- SERAH TERIMA: input tanggal jangan "menciut" saat kosong --- */
-  body[data-page="serah"] input[type="date"]{
-    -webkit-appearance: none;
-    appearance: none;
-    font-size: 16px !important;      /* cegah auto-zoom iOS */
-    height: auto !important;         /* ikuti tinggi normal Android */
-    min-height: 44px !important;     /* stabil, gak kecil */
-    padding: 0 12px !important;
-    text-align: center;
-    line-height: normal !important;
-  }
-  body[data-page="serah"] input[type="date"]::-webkit-date-and-time-value{
-    text-align: center;
-  }
-
-  /* --- TRACKMATE & APPSHEET: input/select lokasi rapi, gak biru, 
-         ukurannya SAMA seperti mobile Android --- */
+  /* 1) TRACKMATE & APPSHEET — Select "Pilih Lokasi"
+     - Tinggi 40px persis (match Android)
+     - Hilang biru Safari
+     - Anti-zoom (16px) tapi tetap 40px karena height fixed */
   body[data-page="trackmate"] select,
-  body[data-page="trackmate"] input[type="text"],
-  body[data-page="appsheet"]  select,
-  body[data-page="appsheet"]  input[type="text"]{
+  body[data-page="appsheet"]  select{
     -webkit-appearance: none !important;
     appearance: none !important;
-    box-shadow: none !important;           /* buang inner shadow biru iOS */
+    box-shadow: none !important;
     background: #fff !important;
     border: 1px solid #e5e7eb !important;
     border-radius: 10px !important;
 
-    height: auto !important;               /* ikut layout Android */
-    min-height: 40px !important;           /* kira-kira tinggi kontrol Android */
-    padding: 10px 12px !important;         /* sama seperti style kamu */
-    font-size: 16px !important;            /* anti-zoom iOS */
-    line-height: normal !important;        /* jangan paksa jadi tambah tinggi */
+    height: 40px !important;          /* FIX ukuran */
+    padding: 0 12px !important;        /* tanpa padding vertikal */
+    line-height: 40px !important;      /* teks center vertikal */
+    font-size: 16px !important;        /* anti-zoom iOS */
+    color: #111 !important;
   }
-
-  /* placeholder option jangan kebiruan di iOS */
+  /* placeholder option jangan biru */
   body[data-page="trackmate"] select option[disabled],
   body[data-page="appsheet"]  select option[disabled]{
     color:#9ca3af !important;
   }
+
+  /* 2) SERAH TERIMA — Input Tanggal (tinggi pas, center) */
+  body[data-page="serah"] input[type="date"]{
+    -webkit-appearance: none;
+    appearance: none;
+    height: 44px !important;           /* match Android */
+    padding: 0 12px !important;
+    line-height: 44px !important;      /* center */
+    font-size: 16px !important;        /* anti-zoom */
+    text-align: center;
+    background:#fff;
+  }
+  body[data-page="serah"] input[type="date"]::-webkit-date-and-time-value{
+    text-align: center;
+  }
 }
+
