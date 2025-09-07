@@ -170,7 +170,7 @@ async function exportXLSX(){
     const mm=Number(mmStr||new Date().getMonth()+1);
     const monthName=new Date(yy,mm-1,1).toLocaleDateString('id-ID',{month:'long'});
     const title=`ABSENSI TEKNISI BULAN ${monthName.toUpperCase()} ${yy}`;
-    const fileName=`Format SPJ ${monthName} ${yy} - ${teknisiPembuat}.xlsx`;
+    const fileName=`SPJ ${monthName} ${yy} - ${teknisiPembuat}.xlsx`;
 
     const wb=new ExcelJS.Workbook();
     const ws=wb.addWorksheet('Format SPJ');
@@ -210,48 +210,102 @@ async function exportXLSX(){
     }
 
     // Data rows (pakai seluruh data bulan ini — diasumsikan per individu)
-    const startRow=5; let rIdx=startRow;
-    const toMinutes=(hhmm)=>{if(!hhmm)return 0; const [h,m]=String(hhmm).split(':').map(Number); return isNaN(h)||isNaN(m)?0:h*60+m;};
-    rowsMonth.forEach(r=>{
-      const row=ws.getRow(rIdx++);
-      row.values=[
-        r.tanggalLabel||r.date,r.teknisi||'',r.lokasiDari||'',r.lokasiKe||'',r.jenis||'',r.detail||'',r.status||'',
-        r.jamMasuk?minutesToExcelTime(toMinutes(r.jamMasuk)):null,
-        r.jamBerangkat?minutesToExcelTime(toMinutes(r.jamBerangkat)):null,
-        r.jamTiba?minutesToExcelTime(toMinutes(r.jamTiba)):null,
-        r.jamMulai?minutesToExcelTime(toMinutes(r.jamMulai)):null,
-        r.jamSelesai?minutesToExcelTime(toMinutes(r.jamSelesai)):null,
-        minutesToExcelTime(r.durasiPenyelesaianMin||0),
-        r.jarakKm??0,
-        minutesToExcelTime(r.waktuTempuhMin||0),
-        r.keterangan||'',
-      ];
-      ['H','I','J','K','L','M','O'].forEach(col=>{const c=ws.getCell(col+row.number); if(typeof c.value==='number') c.numFmt='hh:mm';});
-      for(let c=1;c<=16;c++){ const cell=row.getCell(c); cell.alignment={vertical:'middle',horizontal:c===2?'left':'center',wrapText:false}; cell.border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}}; }
-      row.height=18; row.commit&&row.commit();
-    });
+    const startRow = 5; let rIdx = startRow;
+const toMinutes = (hhmm) => {
+  if (!hhmm) return 0;
+  const [h, m] = String(hhmm).split(':').map(Number);
+  return (isNaN(h) || isNaN(m)) ? 0 : (h * 60 + m);
+};
+
+rowsMonth.forEach(r => {
+  // konversi menit -> excel time (0 kalau kosong)
+  const tMasuk   = minutesToExcelTime(toMinutes(r.jamMasuk));
+  const tBerang  = minutesToExcelTime(toMinutes(r.jamBerangkat));
+  const tTiba    = minutesToExcelTime(toMinutes(r.jamTiba));
+  const tMulai   = minutesToExcelTime(toMinutes(r.jamMulai));
+  const tSelesai = minutesToExcelTime(toMinutes(r.jamSelesai));
+  const tWP      = minutesToExcelTime(r.durasiPenyelesaianMin || 0); // duration
+  const tWT      = minutesToExcelTime(r.waktuTempuhMin || 0);        // duration
+
+  const row = ws.getRow(rIdx++);
+  row.values = [
+    r.tanggalLabel || r.date,
+    r.teknisi || '',
+    r.lokasiDari || '',
+    r.lokasiKe || '',
+    r.jenis || '',
+    r.detail || '',
+    r.status || '',
+    tMasuk, tBerang, tTiba, tMulai, tSelesai, // H..L
+    tWP,                                       // M (dur)
+    r.jarakKm ?? 0,                             // N
+    tWT,                                       // O (dur)
+    r.keterangan || '',
+  ];
+
+  // FORMAT: jam (24h) vs durasi ([h]:mm)
+  ['H','I','J','K','L'].forEach(col => {
+  ws.getCell(col + row.number).numFmt = 'h:mm';  // 7:00, 9:05, 0:15 
+  });
+  ['M','O'].forEach(col => { ws.getCell(col + row.number).numFmt = '[h]:mm'; });
+
+  for (let c = 1; c <= 16; c++) {
+    const cell = row.getCell(c);
+    cell.alignment = { vertical: 'middle', horizontal: c === 2 ? 'left' : 'center', wrapText: false };
+    cell.border = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
+  }
+  row.height = 18; row.commit && row.commit();
+});
+
 
     // TOTAL row styled A:P like header
-    const endRow=rIdx-1; const totalRowIdx=endRow+1;
-    ws.mergeCells(`A${totalRowIdx}:L${totalRowIdx}`);
-    const totalCell=ws.getCell(`A${totalRowIdx}`);
-    totalCell.value='TOTAL'; totalCell.font={bold:true}; totalCell.alignment={vertical:'middle',horizontal:'center'};
-    ws.getCell(`M${totalRowIdx}`).value={formula:`SUM(M${startRow}:M${endRow})`};
-    ws.getCell(`N${totalRowIdx}`).value={formula:`SUM(N${startRow}:N${endRow})`};
-    ws.getCell(`O${totalRowIdx}`).value={formula:`SUM(O${startRow}:O${endRow})`};
-    ws.getCell(`M${totalRowIdx}`).numFmt='hh:mm'; ws.getCell(`O${totalRowIdx}`).numFmt='hh:mm';
-    const totalRow=ws.getRow(totalRowIdx);
-    for(let c=1;c<=16;c++){
-      const cell=totalRow.getCell(c);
-      cell.font={bold:true};
-      cell.alignment={vertical:'middle',horizontal:c===2?'left':'center'};
-      cell.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFC5D9F1'}};
-      cell.border={top:{style:'thin'},left:{style:'thin'},bottom:{style:'thin'},right:{style:'thin'}};
-    }
-    totalRow.height=18; totalRow.commit&&totalRow.commit();
+    
+const endRow = rIdx - 1;
+const totalRowIdx = rIdx;      // <— TIDAK rIdx++ di sini
 
-    // === Signature area — TANPA MERGE, posisi: C/D/E/N, nama underline+bold, jabatan bold ===
-    const sigTop = totalRowIdx + 2;
+// label TOTAL nempel kiri, angka di M–O baris yang sama
+ws.mergeCells(`A${totalRowIdx}:L${totalRowIdx}`);
+const totalCell = ws.getCell(`A${totalRowIdx}`);
+totalCell.value = 'TOTAL';
+totalCell.font = { bold: true };
+totalCell.alignment = { vertical:'middle', horizontal:'center' };
+
+// hitung total via JS (buat cache result biar viewer yg ga auto-calc tetap nampilin)
+const sumWP = rowsMonth.reduce((a,r)=> a + (r.durasiPenyelesaianMin || 0), 0); // menit
+const sumJT = rowsMonth.reduce((a,r)=> a + (Number(r.jarakKm) || 0), 0);       // km
+const sumWT = rowsMonth.reduce((a,r)=> a + (r.waktuTempuhMin || 0), 0);        // menit
+
+const toExcelTime = (mins) => (mins || 0) / (24*60);
+
+// formula + cached result (aman di viewer HP/GSuite)
+ws.getCell(`M${totalRowIdx}`).value = { formula:`SUM(M${startRow}:M${endRow})`, result: toExcelTime(sumWP) };
+ws.getCell(`N${totalRowIdx}`).value = { formula:`SUM(N${startRow}:N${endRow})`, result: sumJT };
+ws.getCell(`O${totalRowIdx}`).value = { formula:`SUM(O${startRow}:O${endRow})`, result: toExcelTime(sumWT) };
+
+// format durasi pakai [h]:mm biar >24 jam gak wrap
+ws.getCell(`M${totalRowIdx}`).numFmt = '[h]:mm';
+ws.getCell(`O${totalRowIdx}`).numFmt = '[h]:mm';
+
+// styling baris total
+const totalRow = ws.getRow(totalRowIdx);
+for (let c=1; c<=16; c++){
+  const cell = totalRow.getCell(c);
+  cell.font = { bold:true };
+  cell.alignment = { vertical:'middle', horizontal: c===2 ? 'left' : 'center' };
+  cell.fill = { type:'pattern', pattern:'solid', fgColor:{ argb:'FFC5D9F1' } };
+  cell.border = { top:{style:'thin'}, left:{style:'thin'}, bottom:{style:'thin'}, right:{style:'thin'} };
+}
+totalRow.height = 18;
+totalRow.commit && totalRow.commit();
+
+rIdx++; // <— baru increment setelah total selesai
+
+// paksa Excel hitung ulang saat buka (just in case)
+if (wb.calcProperties) wb.calcProperties.fullCalcOnLoad = true;
+
+// lanjut: const sigTop = totalRowIdx + 2;
+const sigTop = totalRowIdx + 2;
+
 
     // Tanggal & label kanan (kolom N)
     ws.getCell(`N${sigTop}`).value = `Jakarta, ${new Date().toLocaleDateString('id-ID',{day:'numeric',month:'long',year:'numeric'})}`;
