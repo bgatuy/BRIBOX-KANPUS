@@ -278,32 +278,19 @@ body.dark-mode[data-page="monthly"] .card{
   }
 }
 
-/* === iOS Safari Form Reset (scoped monthly-form) === */
+/* === iOS polish: input tanggal/waktu center, tinggi konsisten === */
 @supports (-webkit-touch-callout: none) {
-  body[data-page="monthly"] input,
-  body[data-page="monthly"] select,
-  body[data-page="monthly"] textarea {
-    -webkit-appearance: none;
-    appearance: none;
-    border: 1px solid var(--border);
-    border-radius: var(--ctl-radius);
-    background: #fff;
-    font-size: 16px;
-    line-height: 1.4;
-    padding: 0 var(--ctl-pad-x);
-    box-sizing: border-box;
-  }
-
   body[data-page="monthly"] input[type="date"],
-  body[data-page="monthly"] input[type="time"],
-  body[data-page="monthly"] input[type="number"] {
-    font-size: 16px;
+  body[data-page="monthly"] input[type="time"] {
+    text-align: center;                /* center di iOS */
+    padding-right: 36px;               /* space icon */
     min-height: var(--ctl-h);
-    padding-right: 36px;
+    font-size: 16px;                   /* anti-zoom */
   }
-
-  body[data-page="monthly"] select {
-    background-color: #fff;
-    background-image: none;
+  /* value renderer Safari */
+  body[data-page="monthly"] input[type="date"]::-webkit-date-and-time-value,
+  body[data-page="monthly"] input[type="time"]::-webkit-date-and-time-value {
+    text-align: center;
   }
 }
+

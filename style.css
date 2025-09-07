@@ -386,32 +386,34 @@ body[data-page="serah"] .controls-right.btn-row { gap:10px; margin:0; }
   padding: 6px 12px;        /* ruang dalam item */
 }
 
-/* === iOS Safari Form Reset === */
+/* === iOS hard reset: FORM GLOBAL + TRACKMATE === */
 @supports (-webkit-touch-callout: none) {
-  input,
-  select,
-  textarea {
-    -webkit-appearance: none;
-    appearance: none;
-    border: 1px solid #ccc;
-    border-radius: 8px;
-    background: #fff;
-    font-size: 16px;   /* cegah zoom */
-    line-height: 1.4;
-    padding: 0.6rem 0.8rem;
-    box-sizing: border-box;
+  /* matiin gaya bawaan iOS */
+  input, select, textarea {
+    -webkit-appearance: none !important;
+    appearance: none !important;
+    box-shadow: none !important;
+    background-clip: padding-box;
   }
 
-  input[type="date"],
-  input[type="time"],
-  input[type="number"] {
-    font-size: 16px;
-    min-height: 40px;
-    padding-right: 36px;
+  /* ukuran font >=16px biar iOS gak nge-zoom */
+  input, select, textarea { font-size: 16px; line-height: 1.4; }
+
+  /* --- khusus halaman Trackmate --- */
+  body[data-page="trackmate"] select,
+  body[data-page="trackmate"] input,
+  body[data-page="trackmate"] textarea {
+    background: #fff !important;
+    border: 1px solid #e5e7eb !important;
+    border-radius: 10px !important;
+    color: #111 !important;
+    padding: 10px 12px !important;
   }
 
-  select {
-    background-color: #fff;
-    background-image: none; /* hilangkan arrow biru iOS */
+  /* placeholder/opsi dummy abu-abu, bukan biru */
+  body[data-page="trackmate"] select option[disabled],
+  body[data-page="trackmate"] select option[disabled][selected] {
+    color: #9aa3af !important;
   }
 }
+
