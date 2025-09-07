@@ -278,22 +278,52 @@ body.dark-mode[data-page="monthly"] .card{
   }
 }
 
-/* ===== iOS-ONLY (Safari) — Monthly Form: Tanggal rapi ===== */
+/* ===== iOS-ONLY (Safari) — Monthly Form: Tanggal & Bulan rapi ===== */
 @supports (-webkit-touch-callout: none) {
+
+  /* === Input Tanggal === */
   body[data-page="monthly"] input[type="date"]{
     -webkit-appearance: none;
     appearance: none;
     height: var(--ctl-h) !important;         /* = 44px dari variabelmu */
     padding: 0 var(--ctl-pad-x) !important;  /* horizontal saja */
     line-height: var(--ctl-h) !important;    /* center vertikal */
-    font-size: 13px !important;              /* anti-zoom */
-    text-align: left;
-    /* sedikit buffer supaya tidak tampak "mepet atas" di beberapa iOS */
-    padding-top: 1px !important;
+    font-size: 13px !important;              /* konsisten dgn desain */
+    text-align: left !important;
+    padding-top: 1px !important;             /* buffer biar gak mepet atas */
   }
   body[data-page="monthly"] input[type="date"]::-webkit-date-and-time-value{
-    text-align: left;
+    text-align: left !important;
   }
+
+  /* === Input Bulan === */
+  body[data-page="monthly"] input[type="month"]{
+    -webkit-appearance: none;
+    appearance: none;
+    box-sizing: border-box;
+
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+
+    height: var(--ctl-h) !important;
+    padding: 0 var(--ctl-pad-x) !important;
+
+    text-align: left !important;
+    text-align-last: left !important;
+    line-height: var(--ctl-h) !important;
+    font-size: 13px !important;
+    background: #fff;
+    border: 1px solid var(--border);
+    border-radius: var(--ctl-radius);
+  }
+  body[data-page="monthly"] input[type="month"]::-webkit-date-and-time-value{
+    text-align: left !important;
+  }
+
+  /* jaga supaya field gak melar */
+  body[data-page="monthly"] .field{ min-width: 0; }
 }
+
 
 
