@@ -386,45 +386,46 @@ body[data-page="serah"] .controls-right.btn-row { gap:10px; margin:0; }
   padding: 6px 12px;        /* ruang dalam item */
 }
 
-/* ===== iOS FINAL PATCH: global, Trackmate, AppSheet ===== */
+/* ===== iOS FIX (GLOBAL + SERAH + APPSHEET/TRACKMATE) ===== */
 @supports (-webkit-touch-callout: none) {
-  /* Global reset */
-  input, select, textarea {
+  /* — SERAH TERIMA: tanggal tetap tinggi meski masih kosong — */
+  body[data-page="serah"] input[type="date"]{
+    -webkit-appearance: none;
+    appearance: none;
+    font-size: 16px;          /* anti-zoom iOS */
+    height: 44px;             /* match Android (≈var form) */
+    padding: 0 12px;
+    text-align: center;
+  }
+  body[data-page="serah"] input[type="date"]::-webkit-date-and-time-value{
+    text-align: center;
+  }
+
+  /* — TRACKMATE & APPSHEET: input/select lokasi ukuran stabil — */
+  body[data-page="trackmate"] select,
+  body[data-page="trackmate"] input[type="text"],
+  body[data-page="appsheet"]  select,
+  body[data-page="appsheet"]  input[type="text"]{
     -webkit-appearance: none !important;
     appearance: none !important;
     box-shadow: none !important;
-    background-clip: padding-box;
-    font-size: 16px;   /* cegah auto zoom */
-    line-height: 1.4;
-  }
-
-  /* Trackmate */
-  body[data-page="trackmate"] select,
-  body[data-page="trackmate"] input,
-  body[data-page="trackmate"] textarea {
     background: #fff !important;
     border: 1px solid #e5e7eb !important;
     border-radius: 10px !important;
-    color: #111 !important;
-    padding: 10px 12px !important;
+
+    /* kunci ukuran agar SAMA seperti Android mobile */
+    height: 40px !important;
+    padding: 0 12px !important;
+    line-height: 40px;         /* jaga vertikal alignment */
+    font-size: 16px !important;/* anti-zoom, tanpa bikin tambah tinggi */
   }
 
-  /* AppSheet */
-  body[data-page="appsheet"] select,
-  body[data-page="appsheet"] input,
-  body[data-page="appsheet"] textarea {
-    background: #fff !important;
-    border: 1px solid #e5e7eb !important;
-    border-radius: 10px !important;
-    box-shadow: none !important;
-    color: #111 !important;
-    font-size: 16px !important;
-    padding: 10px 12px !important;
-  }
-  body[data-page="appsheet"] select option[disabled],
-  body[data-page="appsheet"] select option[disabled][selected] {
-    color: #9ca3af !important;
+  /* placeholder option di iOS jangan biru */
+  body[data-page="trackmate"] select option[disabled],
+  body[data-page="appsheet"]  select option[disabled]{
+    color:#9ca3af !important;
   }
 }
+
 
 

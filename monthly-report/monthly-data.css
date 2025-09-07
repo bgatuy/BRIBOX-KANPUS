@@ -221,7 +221,7 @@ body.dark-mode[data-page="monthly"] .card{ box-shadow:0 2px 10px rgba(0,0,0,.35)
 /* Guard layout utama */
 body[data-page="monthly"] .dashboard .main{ min-width:0; }
 
-/* ===== iOS PATCH: tombol grid rapih di Monthly Data ===== */
+/* ===== iOS FIX: grid tombol Monthly Data tetap 2 kolom + 1 full ===== */
 @supports (-webkit-touch-callout: none) {
   @media (max-width: 768px){
     body[data-page="monthly"] .controls-right{
@@ -237,7 +237,7 @@ body[data-page="monthly"] .dashboard .main{ min-width:0; }
       min-height: var(--btn-h) !important;
       margin: 0 !important;
     }
-    /* Tambah Data = baris sendiri */
+    /* Tambah Data = baris sendiri, center */
     body[data-page="monthly"] .controls-right .btn.info{
       grid-column: 1 / -1 !important;
       justify-self: center !important;
@@ -245,5 +245,6 @@ body[data-page="monthly"] .dashboard .main{ min-width:0; }
     }
   }
 }
+
 
 
