@@ -386,4 +386,32 @@ body[data-page="serah"] .controls-right.btn-row { gap:10px; margin:0; }
   padding: 6px 12px;        /* ruang dalam item */
 }
 
+/* === iOS Safari Form Reset === */
+@supports (-webkit-touch-callout: none) {
+  input,
+  select,
+  textarea {
+    -webkit-appearance: none;
+    appearance: none;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+    background: #fff;
+    font-size: 16px;   /* cegah zoom */
+    line-height: 1.4;
+    padding: 0.6rem 0.8rem;
+    box-sizing: border-box;
+  }
 
+  input[type="date"],
+  input[type="time"],
+  input[type="number"] {
+    font-size: 16px;
+    min-height: 40px;
+    padding-right: 36px;
+  }
+
+  select {
+    background-color: #fff;
+    background-image: none; /* hilangkan arrow biru iOS */
+  }
+}
