@@ -212,25 +212,13 @@ async function generatePdfSerahTerima(){
   const mergedBytes = await mergedPdf.save();
   const mergedBlob  = new Blob([mergedBytes], { type:'application/pdf' });
 
-  // === DOWNLOAD BEHAVIOR: Desktop = download; iOS = open tab baru ===
+  // === DOWNLOAD: versi lama (anchor + download) ===
   const url = URL.createObjectURL(mergedBlob);
-  const filename = 'Form CM merged.pdf';
-
-  if (isIOS()) {
-    // Safari iOS sering nge-IGNORE attribute download → kita buka tab
-    window.open(url, '_blank', 'noopener,noreferrer');
-    showToast('PDF dibuka di tab baru. Tap Share → Save to Files untuk menyimpan.');
-    // kasih waktu sebelum revoke
-    setTimeout(()=>URL.revokeObjectURL(url), 60_000);
-  } else {
-    const a = document.createElement('a');
-    a.href = url; a.download = filename;
-    document.body.appendChild(a);
-    a.click();
-    a.remove();
-    setTimeout(()=>URL.revokeObjectURL(url), 0);
-    showToast('PDF berhasil diunduh. Cek folder Downloads.');
-  }
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'Form CM merged.pdf';
+  a.click();
+  URL.revokeObjectURL(url);
 }
 
 async function getAllPdfBuffersFromIndexedDB(preferredOrderNames=[]){
