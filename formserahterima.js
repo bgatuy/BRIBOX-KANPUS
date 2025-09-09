@@ -51,6 +51,25 @@ function formatTanggalSerahForPdf(val){ if(!val||!/^\d{4}-\d{2}-\d{2}$/.test(val
 function getPdfHistori(){ const arr=JSON.parse(localStorage.getItem('pdfHistori')||'[]'); return Array.isArray(arr)?arr:[];}
 function setPdfHistori(arr){ localStorage.setItem('pdfHistori', JSON.stringify(arr)); }
 
+// kecil2 lucu buat deteksi iOS (Safari suka ngeyelan sama download attribute)
+function isIOS(){
+  const ua = navigator.userAgent || '';
+  const iThing = /iPad|iPhone|iPod/.test(ua);
+  const macTouch = navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1;
+  return iThing || macTouch;
+}
+
+// Toast ringan
+function showToast(message, duration = 3000) {
+  const toast = document.createElement('div');
+  toast.className = 'toast';
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  setTimeout(() => toast.classList.add('show'), 10);
+  const remove = () => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); };
+  toast.addEventListener('click', remove);
+  setTimeout(remove, duration);
+}
 
 function collectRowsForPdf(){
   const rows=[];
@@ -59,7 +78,7 @@ function collectRowsForPdf(){
 
     const no = cells[0].textContent.trim() || `${i+1}`;
 
-    // ⬇️ GANTI: ambil ISO dari data-attr kalau ada; fallback parse teks sel
+    // ambil ISO dari data-attr kalau ada; fallback parse teks sel
     const cellTanggal = tr.querySelector('.tgl-serah') || cells[1];
     const raw = (cellTanggal?.dataset?.iso || cellTanggal?.textContent || '').trim();
     const tanggalSerah = /^\d{4}-\d{2}-\d{2}$/.test(raw) 
@@ -73,7 +92,6 @@ function collectRowsForPdf(){
   });
   return rows;
 }
-
 
 /* ========= IndexedDB helper ========= */
 function openDb(){
@@ -173,7 +191,7 @@ async function generatePdfSerahTerima(){
   const mainPdfBlob = doc.output('blob');
   const mainPdfBuffer = await mainPdfBlob.arrayBuffer();
 
-  // Ambil lampiran dari IndexedDB (urut sesuai histori)
+  // Ambil lampiran dari IndexedDB (urut sesuai histori, by fileName – kompatibel data lama)
   const prefer = getPdfHistori().map(h => h.fileName).filter(Boolean);
   const uploadBuffers = await getAllPdfBuffersFromIndexedDB(prefer);
 
@@ -193,9 +211,26 @@ async function generatePdfSerahTerima(){
 
   const mergedBytes = await mergedPdf.save();
   const mergedBlob  = new Blob([mergedBytes], { type:'application/pdf' });
+
+  // === DOWNLOAD BEHAVIOR: Desktop = download; iOS = open tab baru ===
   const url = URL.createObjectURL(mergedBlob);
-  const a = document.createElement('a'); a.href=url; a.download='Form CM merged.pdf'; a.click();
-  URL.revokeObjectURL(url);
+  const filename = 'Form CM merged.pdf';
+
+  if (isIOS()) {
+    // Safari iOS sering nge-IGNORE attribute download → kita buka tab
+    window.open(url, '_blank', 'noopener,noreferrer');
+    showToast('PDF dibuka di tab baru. Tap Share → Save to Files untuk menyimpan.');
+    // kasih waktu sebelum revoke
+    setTimeout(()=>URL.revokeObjectURL(url), 60_000);
+  } else {
+    const a = document.createElement('a');
+    a.href = url; a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    setTimeout(()=>URL.revokeObjectURL(url), 0);
+    showToast('PDF berhasil diunduh. Cek folder Downloads.');
+  }
 }
 
 async function getAllPdfBuffersFromIndexedDB(preferredOrderNames=[]){
@@ -215,11 +250,12 @@ async function getAllPdfBuffersFromIndexedDB(preferredOrderNames=[]){
           for(const entry of rows){
             const blob = entry?.data, name = entry?.name || '(tanpa-nama)';
             if(!(blob instanceof Blob) || blob.type!=='application/pdf' || !blob.size){
-              console.warn(`⏭️ Skip "${name}" — invalid PDF`);
-              continue;
+              console.warn(`⏭️ Skip "${name}" — invalid PDF`); continue;
             }
-            try{ const buffer = await blob.arrayBuffer(); items.push({name, buffer}); }
-            catch(err){ console.warn(`⏭️ Skip "${name}" — gagal baca`, err); }
+            try{
+              const buffer = await blob.arrayBuffer();
+              items.push({name, buffer, contentHash: entry?.contentHash || null});
+            }catch(err){ console.warn(`⏭️ Skip "${name}" — gagal baca`, err); }
           }
           if(Array.isArray(preferredOrderNames) && preferredOrderNames.length){
             items.sort((a,b)=>{
@@ -250,7 +286,7 @@ function renderTabel(){
     namaUker: stripLeadingColon(it.namaUker) // guard kolon saat render
   }));
   tbody.innerHTML = data.map((item, idx)=>`
-    <tr data-i="${idx}">
+    <tr data-i="${idx}" data-name="${(item.fileName||'').replace(/"/g,'&quot;')}" data-hash="${item.contentHash||''}">
       <td>${item._no}</td>
       <td contenteditable="true" class="tgl-serah"></td>
       <td>${clean(item.namaUker) || '-'}</td>
@@ -270,38 +306,56 @@ inputTanggalSerah?.addEventListener('change', ()=>{
   btnGenerate.disabled = !iso;
 });
 
-
 tbody?.addEventListener('click', async (e)=>{
   const btn = e.target.closest('.btn-del'); if(!btn) return;
   if(!confirm('Hapus entri ini dari histori?')) return;
 
-    const isoNow = inputTanggalSerah?.value || '';
+  // sinkronkan tanggal serah yang diedit massal (quality-of-life)
+  const isoNow = inputTanggalSerah?.value || '';
   if (isoNow) document.querySelectorAll('.tgl-serah').forEach(td=>{
     td.dataset.iso = isoNow;
     td.textContent = formatTanggalSerahForPdf(isoNow); // dd/mm/yyyy
   });
 
-
   const idx = parseInt(btn.dataset.i,10);
   const arr = getPdfHistori();
   if(!Number.isInteger(idx) || idx<0 || idx>=arr.length) return;
 
-  const fileNameToDelete = arr[idx].fileName;
-  arr.splice(idx,1); setPdfHistori(arr);
+  const target = arr[idx];
+  const fileNameToDelete = target.fileName;
+  const hashToDelete = target.contentHash || '';
 
+  // 1) LocalStorage — filter presisi (nama+hash kalau ada)
+  const filtered = arr.filter(r => !(r.fileName === fileNameToDelete && ((hashToDelete ? r.contentHash === hashToDelete : true))));
+  setPdfHistori(filtered);
+
+  // 2) IndexedDB — delete presisi (nama+hash kalau ada), fallback by name untuk data lama
   const db = await openDb();
-  const tx = db.transaction(['pdfs'],'readwrite');
-  const store = tx.objectStore('pdfs');
-  const cursorReq = store.openCursor();
-  cursorReq.onsuccess = (e)=>{
-    const cursor = e.target.result;
-    if(cursor){
-      const entry = cursor.value;
-      if(entry.name === fileNameToDelete){ cursor.delete(); console.log(`🗑️ File ${fileNameToDelete} di IndexedDB dihapus.`); }
-      else cursor.continue();
-    }
-  };
+  await new Promise((resolve) => {
+    const tx = db.transaction(['pdfs'],'readwrite');
+    const store = tx.objectStore('pdfs');
+    const cursorReq = store.openCursor();
+    cursorReq.onsuccess = (e)=>{
+      const cursor = e.target.result;
+      if(cursor){
+        const entry = cursor.value || {};
+        const nameOK = entry.name === fileNameToDelete;
+        const hashOK = hashToDelete ? (entry.contentHash === hashToDelete) : true;
+        if(nameOK && hashOK){
+          cursor.delete();
+          console.log(`🗑️ File ${fileNameToDelete}${hashToDelete?` [${hashToDelete.slice(0,8)}]`:''} di IndexedDB dihapus.`);
+          resolve();
+        } else {
+          cursor.continue();
+        }
+      } else {
+        resolve();
+      }
+    };
+    cursorReq.onerror = ()=>resolve();
+  });
 
+  // 3) Update UI
   renderTabel();
 });
 
@@ -330,6 +384,6 @@ async function debugListPDF(){
   const tx = db.transaction(['pdfs'],'readonly');
   const store = tx.objectStore('pdfs');
   const req = store.getAll();
-  req.onsuccess = ()=>{ console.log('📂 File di IndexedDB:', req.result.map(x=>x.name)); };
+  req.onsuccess = ()=>{ console.log('📂 File di IndexedDB:', req.result.map(x=>`${x.name}${x.contentHash?` [${x.contentHash.slice(0,8)}]`:''}`)); };
 }
 window.debugListPDF = debugListPDF;

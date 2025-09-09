@@ -6,6 +6,18 @@ if (window.pdfjsLib && (!pdfjsLib.GlobalWorkerOptions.workerSrc || pdfjsLib.Glob
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 }
 
+/* ========= HASH UTIL (BARU) ========= */
+async function sha256File(file) {
+  try {
+    const buf = await file.arrayBuffer();
+    const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  } catch {
+    // fallback kalau SubtleCrypto gak ada
+    return `fz_${file.size}_${file.lastModified}_${Math.random().toString(36).slice(2,10)}`;
+  }
+}
+
 /* ========= SIDEBAR ========= */
 const sidebar   = document.querySelector('.sidebar');
 const overlay   = document.getElementById('sidebarOverlay') || document.querySelector('.sidebar-overlay');
@@ -74,7 +86,8 @@ function openDb() {
   });
 }
 
-async function savePdfToIndexedDB(fileOrBlob, nameOverride) {
+// UPDATED: tetap kompatibel; param ke-3 opsional utk menitip contentHash
+async function savePdfToIndexedDB(fileOrBlob, nameOverride, extra = {}) {
   const blob = fileOrBlob instanceof Blob ? fileOrBlob : null;
   if (!blob) throw new Error('savePdfToIndexedDB: harus File/Blob');
   const name = nameOverride || (fileOrBlob.name || '(tanpa-nama)');
@@ -89,7 +102,8 @@ async function savePdfToIndexedDB(fileOrBlob, nameOverride) {
     tx.objectStore(STORE_NAME).add({
       name,
       dateAdded: new Date().toISOString(),
-      data: blob
+      data: blob,
+      contentHash: extra.contentHash || null   // ← titip hash ke item
     });
   });
   console.log(`✅ Tersimpan: ${name} (${(blob.size/1024).toFixed(1)} KB)`);
@@ -225,15 +239,28 @@ copyBtn?.addEventListener("click", async () => {
 
   if (!currentFile || !currentTanggalRaw) return;
 
+  // === HASH BARU ===
+  const contentHash = await sha256File(currentFile);
+
   const namaUkerBersih = stripLeadingColon(unitKerja) || '-';
   const histori = JSON.parse(localStorage.getItem("pdfHistori")) || [];
-  const key = `${namaUkerBersih}|${currentTanggalRaw}|${currentFile.name}`;
-  const isExist = histori.some(x => `${x.namaUker}|${x.tanggalPekerjaan}|${x.fileName}` === key);
 
-  if (!isExist) {
-    histori.push({ namaUker: namaUkerBersih, tanggalPekerjaan: currentTanggalRaw, fileName: currentFile.name });
+  // DEDUPE BERDASARKAN HASH (file identik saja yang diblokir)
+  const isIdentik = histori.some(x => x.contentHash === contentHash);
+
+  if (!isIdentik) {
+    const rec = {
+      namaUker: namaUkerBersih,
+      tanggalPekerjaan: currentTanggalRaw,
+      fileName: currentFile.name,
+      contentHash,                          // identitas isi
+      size: currentFile.size,
+      uploadedAt: new Date().toISOString()
+    };
+    histori.push(rec);
     localStorage.setItem("pdfHistori", JSON.stringify(histori));
-    await savePdfToIndexedDB(currentFile); // Simpan File asli
+
+    await savePdfToIndexedDB(currentFile, undefined, { contentHash }); // simpan blob + hash
     showToast(`✔ berhasil disimpan ke histori.`);
   } else {
     showToast(`ℹ sudah ada di histori.`);

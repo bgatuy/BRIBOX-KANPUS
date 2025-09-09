@@ -6,6 +6,18 @@ if (window.pdfjsLib && (!pdfjsLib.GlobalWorkerOptions.workerSrc || pdfjsLib.Glob
     'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
 }
 
+/* ========= HASH UTIL (BARU) ========= */
+async function sha256File(file) {
+  try {
+    const buf = await file.arrayBuffer();
+    const hashBuf = await crypto.subtle.digest('SHA-256', buf);
+    return Array.from(new Uint8Array(hashBuf)).map(b => b.toString(16).padStart(2,'0')).join('');
+  } catch {
+    // fallback kalau SubtleCrypto gak ada
+    return `fz_${file.size}_${file.lastModified}_${Math.random().toString(36).slice(2,10)}`;
+  }
+}
+
 /* ========= SIDEBAR ========= */
 const sidebar   = document.querySelector('.sidebar');
 const overlay   = document.getElementById('sidebarOverlay') || document.querySelector('.sidebar-overlay');
@@ -62,7 +74,8 @@ function openDb() {
   });
 }
 
-async function savePdfToIndexedDB(fileOrBlob) {
+// (BARU) simpan sambil titip contentHash, tanpa ubah skema store
+async function savePdfToIndexedDB_keepSchema(fileOrBlob, { contentHash } = {}) {
   const blob = fileOrBlob instanceof Blob ? fileOrBlob : null;
   if (!blob) throw new Error('savePdfToIndexedDB: argumen harus File/Blob');
   if (blob.type !== 'application/pdf') throw new Error('Type bukan PDF');
@@ -76,7 +89,8 @@ async function savePdfToIndexedDB(fileOrBlob) {
     tx.objectStore(STORE_NAME).add({
       name: fileOrBlob.name || '(tanpa-nama)',
       dateAdded: new Date().toISOString(),
-      data: blob
+      data: blob,
+      contentHash: contentHash || null          // ← tambahan aman
     });
   });
   console.log(`✅ Tersimpan: ${fileOrBlob.name} (${(blob.size/1024).toFixed(1)} KB)`);
@@ -97,49 +111,31 @@ function extractFlexibleBlock(lines, startLabel, stopLabels = []) {
     .replace(/\s+/g, ' ')
     .trim();
 
-  // gabung jadi satu string biar bisa "potong di tengah baris"
   const text = (lines || []).map(x => x || '').join('\n');
 
-  // cari "startLabel :"
   const startRe = new RegExp(`${startLabel}\\s*:\\s*`, 'i');
   const mStart  = startRe.exec(text);
   if (!mStart) return '';
 
   const tail = text.slice(mStart.index + mStart[0].length);
 
-  // susun pola stopper
   const stopParts = [];
-
-  // 1) stop-label dengan titik dua (di mana pun)
-  for (const lbl of stopLabels) {
-    stopParts.push(`${lbl}\\s*:\\s*`);
-  }
-
-  // 2) khusus "Tanggal" tanpa titik dua tapi langsung tanggal
+  for (const lbl of stopLabels) stopParts.push(`${lbl}\\s*:\\s*`);
   if (stopLabels.some(s => /^tanggal$/i.test(s))) {
     stopParts.push(`Tanggal(?:\\s*Tiket)?\\s+\\d{1,2}[/-]\\d{1,2}[/-]\\d{2,4}`);
   }
-
-  // 3) khusus "Kantor Cabang" telanjang (bukan bagian dari "Kantor Cabang Khusus" di awal nilai)
   if (stopLabels.some(s => /^kantor\\s*cabang$/i.test(s))) {
-    // potong kalau muncul "Kantor Cabang" TANPA ":" dan BUKAN posisi awal nilai
     stopParts.push(`(?<!^)Kantor\\s*Cabang(?!\\s*:)`);
   }
-
-  // 4) generic: field lain di awal baris: "X : ..."
   stopParts.push(`[\\r\\n]+[A-Za-z][A-Za-z/() ]+\\s*:\\s*`);
 
   const stopPattern = stopParts.join('|');
-
-  // ambil minimal sampai sebelum stopper apa pun
   const cutRe = new RegExp(`([\\s\\S]*?)(?=${stopPattern})`, 'i');
   const mCut  = cutRe.exec(tail);
-
   const captured = mCut ? mCut[1] : tail;
 
   return norm(captured);
 }
-
 
 /* ========= State ========= */
 let unitKerja = "-", kantorCabang = "-", tanggalFormatted = "-", tanggalRaw = "",
@@ -170,7 +166,7 @@ fileInput?.addEventListener('change', async function () {
       const lines = rawText.split('\n');
 
       unitKerja       = stripLeadingColon(extractFlexibleBlock(lines,'Unit Kerja',['Kantor Cabang','Tanggal']) || '-');
-      kantorCabang = stripLeadingColon(extractFlexibleBlock(lines, 'Kantor Cabang', ['Tanggal', 'Pelapor']) || '-');
+      kantorCabang    = stripLeadingColon(extractFlexibleBlock(lines,'Kantor Cabang',['Tanggal','Pelapor']) || '-');
       tanggalRaw      = rawText.match(/Tanggal(?:\sTiket)?\s*:\s*(\d{2}\/\d{2}\/\d{4})/)?.[1] || '';
       tanggalFormatted= tanggalRaw ? formatTanggalIndonesia(tanggalRaw) : '-';
       problem         = extractFlexibleBlock(lines,'Trouble Dilaporkan',['Masalah','Solusi','Progress']) || '-';
@@ -245,21 +241,28 @@ copyBtn?.addEventListener("click", async () => {
   const file = fileInput.files[0];
   if (!file) return;
 
+  // === HASH BARU ===
+  const contentHash = await sha256File(file);
+
   const namaUkerBersih = stripLeadingColon(unitKerja) || '-';
   const newEntry = {
     namaUker: namaUkerBersih,
     tanggalPekerjaan: tanggalRaw || '',
-    fileName: file.name || '-'
+    fileName: file.name || '-',
+    contentHash,                               // ← identitas isi file
+    size: file.size,
+    uploadedAt: new Date().toISOString()
   };
 
   const histori = JSON.parse(localStorage.getItem('pdfHistori')) || [];
-  const keyNew = `${newEntry.namaUker}|${newEntry.tanggalPekerjaan}|${newEntry.fileName}`;
-  const exists = histori.some(x => `${x.namaUker}|${x.tanggalPekerjaan}|${x.fileName}` === keyNew);
+
+  // DEDUPE BERDASARKAN HASH (file identik saja yang diblokir)
+  const exists = histori.some(x => x.contentHash === contentHash);
 
   if (!exists) {
     histori.push(newEntry);
     localStorage.setItem('pdfHistori', JSON.stringify(histori));
-    await savePdfToIndexedDB(file); // Simpan File asli
+    await savePdfToIndexedDB_keepSchema(file, { contentHash }); // Simpan File asli + hash
     showToast(`✔ berhasil disimpan ke histori.`);
   } else {
     showToast(`ℹ sudah ada di histori.`);
