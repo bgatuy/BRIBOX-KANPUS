@@ -192,9 +192,11 @@ async function generatePdfSerahTerima(){
   const mainPdfBuffer = await mainPdfBlob.arrayBuffer();
 
   // Ambil urutan fileName sesuai urutan baris di tabel yang sudah disort
-const prefer = [...document.querySelectorAll('#historiBody tr')]
+  const prefer = [...document.querySelectorAll('#historiBody tr')]
   .map(tr => tr.querySelector('td:nth-child(5)')?.textContent?.trim())
   .filter(Boolean);
+
+  const uploadBuffers = await getAllPdfBuffersFromIndexedDB(prefer);
 
   // Merge pakai pdf-lib
   const mergedPdf = await PDFLib.PDFDocument.create();
