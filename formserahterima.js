@@ -191,9 +191,10 @@ async function generatePdfSerahTerima(){
   const mainPdfBlob = doc.output('blob');
   const mainPdfBuffer = await mainPdfBlob.arrayBuffer();
 
-  // Ambil lampiran dari IndexedDB (urut sesuai histori, by fileName – kompatibel data lama)
-  const prefer = getPdfHistori().map(h => h.fileName).filter(Boolean);
-  const uploadBuffers = await getAllPdfBuffersFromIndexedDB(prefer);
+  // Ambil urutan fileName sesuai urutan baris di tabel yang sudah disort
+const prefer = [...document.querySelectorAll('#historiBody tr')]
+  .map(tr => tr.querySelector('td:nth-child(5)')?.textContent?.trim())
+  .filter(Boolean);
 
   // Merge pakai pdf-lib
   const mergedPdf = await PDFLib.PDFDocument.create();
@@ -264,20 +265,34 @@ async function getAllPdfBuffersFromIndexedDB(preferredOrderNames=[]){
 function renderTabel(){
   if(!tbody) return;
   let data = getPdfHistori();
+
   if(!data.length){
     tbody.innerHTML = `<tr><td colspan="6" style="text-align:center;">Belum ada data histori. Unggah PDF di Trackmate atau AppSheet.</td></tr>`;
     return;
   }
+
+  // ⬇️ BARU: sort by Tanggal Pekerjaan (oldest → newest), fallback uploadedAt, stable
+  data = data
+    .map((it, i) => ({ ...it, _idx: i })) // tie-breaker biar stabil
+    .sort((a, b) => {
+      const ka = toNumDateDMY(a.tanggalPekerjaan) || Date.parse(a.uploadedAt || 0) || 0;
+      const kb = toNumDateDMY(b.tanggalPekerjaan) || Date.parse(b.uploadedAt || 0) || 0;
+      if (ka !== kb) return ka - kb;       // ← oldest → newest; kalau mau terbaru di atas, pakai: return kb - ka;
+      return a._idx - b._idx;              // stabil saat tanggal sama
+    });
+
+  // nomor urut + guard kolon
   data = data.map((it,i)=>({
     ...it,
     _no: i+1,
-    namaUker: stripLeadingColon(it.namaUker) // guard kolon saat render
+    namaUker: stripLeadingColon(it.namaUker)
   }));
+
   tbody.innerHTML = data.map((item, idx)=>`
     <tr data-i="${idx}" data-name="${(item.fileName||'').replace(/"/g,'&quot;')}" data-hash="${item.contentHash||''}">
       <td>${item._no}</td>
       <td contenteditable="true" class="tgl-serah"></td>
-      <td>${clean(item.namaUker) || '-'}</td>
+      <td>${(item.namaUker || '-').replace(/\s+/g,' ').trim()}</td>
       <td>${item.tanggalPekerjaan || '-'}</td>
       <td>${item.fileName || '-'}</td>
       <td><button class="danger btn-del" data-i="${idx}">Hapus</button></td>
