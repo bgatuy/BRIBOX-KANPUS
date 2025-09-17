@@ -97,7 +97,11 @@ async function savePdfToIndexedDB_keepSchema(fileOrBlob, { contentHash } = {}) {
 }
 
 /* ========= Helpers ========= */
-const clean = (x) => x?.replace(/\s+/g, ' ').trim() || '';
+const clean = (x) => String(x || '')
+  .replace(/[\u00A0\u2007\u202F]/g, ' ')  // NBSP family -> spasi biasa
+  .replace(/\u00C2/g, '')                 // buang 'Â' sisa decode
+  .replace(/\s+/g, ' ')
+  .trim();
 function stripLeadingColon(s) { return (s || '').replace(/^\s*:+\s*/, ''); }
 function formatTanggalIndonesia(tanggal) {
   if (!tanggal) return '-';
@@ -182,7 +186,25 @@ fileInput?.addEventListener('change', async function () {
       serial          = clean(rawText.match(/SN\s*:\s*(.+)/)?.[1]) || '-';
       merk            = clean(rawText.match(/Merk\s*:\s*(.+)/)?.[1]) || '-';
       type            = clean(rawText.match(/Type\s*:\s*(.+)/)?.[1]) || '-';
-      pic             = clean(rawText.match(/Pelapor\s*:\s*([^\(]+)/)?.[1]) || '-';
+      (() => {
+      // berhenti sebelum label berikutnya
+      const stops = [
+        'Jabatan','Jenis Perangkat','Serial Number','SN','Merk','Type',
+        'Status','STATUS','Tanggal','Nama','Tanda','Cap','Progress',
+        'Unit Kerja','Kantor Cabang'
+      ];
+      // dukung "Pelapor :" ATAU "PIC :"
+      const block = extractFlexibleBlock(lines, '(?:Pelapor|PIC)', stops) || '';
+
+      // Format yang didukung: "Nama" atau "Nama (Jabatan)"
+      const m = block.match(/^\s*([^()\[\]\n]+?)\s*(?:[\(\[]\s*([^()\[\]]+?)\s*[\)\]])?\s*$/);
+      const name = clean(m ? m[1] : block);
+      // kalau ada label "Jabatan :" terpisah, angkut juga
+      const jab  = clean(m && m[2] ? m[2] : extractFlexibleBlock(lines, 'Jabatan', stops) || '');
+
+      pic = jab ? `${name} (${jab})` : (name || '-');
+    })();
+
       status          = clean(rawText.match(/STATUS PEKERJAAN\s*:\s*(.+)/)?.[1]) || '-';
 
       updateOutput();
