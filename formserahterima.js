@@ -311,58 +311,62 @@ inputTanggalSerah?.addEventListener('change', ()=>{
   btnGenerate.disabled = !iso;
 });
 
-tbody?.addEventListener('click', async (e)=>{
-  const btn = e.target.closest('.btn-del'); if(!btn) return;
-  if(!confirm('Hapus entri ini dari histori?')) return;
+// === REPLACE handler ini utuh ===
+tbody?.addEventListener('click', async (e) => {
+  const btn = e.target.closest('.btn-del'); 
+  if (!btn) return;
+  if (!confirm('Hapus entri ini dari histori?')) return;
 
   // sinkronkan tanggal serah yang diedit massal (quality-of-life)
   const isoNow = inputTanggalSerah?.value || '';
-  if (isoNow) document.querySelectorAll('.tgl-serah').forEach(td=>{
+  if (isoNow) document.querySelectorAll('.tgl-serah').forEach(td => {
     td.dataset.iso = isoNow;
     td.textContent = formatTanggalSerahForPdf(isoNow); // dd/mm/yyyy
   });
 
-  const idx = parseInt(btn.dataset.i,10);
+  // ⬇️ AMBIL IDENTITAS LANGSUNG DARI ROW YANG DIKLIK (BUKAN INDEX)
+  const tr = btn.closest('tr');
+  const nameFromRow = tr?.dataset?.name || '';
+  const hashFromRow = tr?.dataset?.hash || '';
+
   const arr = getPdfHistori();
-  if(!Number.isInteger(idx) || idx<0 || idx>=arr.length) return;
 
-  const target = arr[idx];
-  const fileNameToDelete = target.fileName;
-  const hashToDelete = target.contentHash || '';
-
-  // 1) LocalStorage — filter presisi (nama+hash kalau ada)
-  const filtered = arr.filter(r => !(r.fileName === fileNameToDelete && ((hashToDelete ? r.contentHash === hashToDelete : true))));
+  // 1) LocalStorage — hapus presisi:
+  //    - Kalau ada hash → pakai hash saja (paling akurat)
+  //    - Kalau tidak ada hash → fallback ke nama file
+  const filtered = arr.filter(r => {
+    if (hashFromRow) return r.contentHash !== hashFromRow;
+    return r.fileName !== nameFromRow;
+  });
   setPdfHistori(filtered);
 
-  // 2) IndexedDB — delete presisi (nama+hash kalau ada), fallback by name untuk data lama
+  // 2) IndexedDB — hapus presisi juga
   const db = await openDb();
   await new Promise((resolve) => {
-    const tx = db.transaction(['pdfs'],'readwrite');
+    const tx = db.transaction(['pdfs'], 'readwrite');
     const store = tx.objectStore('pdfs');
     const cursorReq = store.openCursor();
-    cursorReq.onsuccess = (e)=>{
-      const cursor = e.target.result;
-      if(cursor){
-        const entry = cursor.value || {};
-        const nameOK = entry.name === fileNameToDelete;
-        const hashOK = hashToDelete ? (entry.contentHash === hashToDelete) : true;
-        if(nameOK && hashOK){
-          cursor.delete();
-          console.log(`🗑️ File ${fileNameToDelete}${hashToDelete?` [${hashToDelete.slice(0,8)}]`:''} di IndexedDB dihapus.`);
-          resolve();
-        } else {
-          cursor.continue();
-        }
-      } else {
-        resolve();
+    cursorReq.onsuccess = (ev) => {
+      const cursor = ev.target.result;
+      if (!cursor) return resolve();
+      const entry = cursor.value || {};
+      const match = hashFromRow
+        ? (entry.contentHash === hashFromRow)
+        : (entry.name === nameFromRow);
+      if (match) {
+        cursor.delete();
+        console.log(`🗑️ Hapus IndexedDB: ${entry.name}${entry.contentHash ? ` [${String(entry.contentHash).slice(0,8)}]` : ''}`);
+        return resolve();
       }
+      cursor.continue();
     };
-    cursorReq.onerror = ()=>resolve();
+    cursorReq.onerror = () => resolve();
   });
 
   // 3) Update UI
   renderTabel();
 });
+
 
 btnReset?.addEventListener('click', async ()=>{
   if(!confirm('Yakin reset semua histori (pdfHistori + IndexedDB)?')) return;
