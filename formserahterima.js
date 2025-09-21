@@ -12,9 +12,6 @@ const inputTanggalSerah = document.getElementById('tglSerahTerima');
 const btnGenerate = document.getElementById('btnGenerate');
 const btnReset = document.getElementById('btnReset');
 const selNama = document.getElementById('selNamaTTD');
-// Versi meta yang dianggap valid (yang baru)
-const META_VER = 2;
-
 
 // Debug flags (boleh dibuat false kalau sudah stabil)
 const DEBUG_SHOW_MARKER = false;   // titik oranye
@@ -182,19 +179,7 @@ async function getAllPdfBuffersFromIndexedDB(preferredOrderNames=[]){
             const blob = entry?.data, name = entry?.name || '(tanpa-nama)';
             if(!(blob instanceof Blob) || blob.type!=='application/pdf' || !blob.size){ continue; }
             const buffer = await blob.arrayBuffer();
-           // ===== only accept meta with version we trust =====
-            const rawMeta = entry?.meta || null;
-            const metaOk = rawMeta
-              && rawMeta.ver === META_VER
-              && typeof rawMeta.x === 'number'
-              && typeof rawMeta.y === 'number';
-
-            items.push({
-              name,
-              buffer,
-              meta: metaOk ? rawMeta : null,           // legacy meta diabaikan
-              contentHash: entry?.contentHash || null
-            });
+            items.push({name, buffer, meta: entry?.meta || null, contentHash: entry?.contentHash || null});
           }
           if(Array.isArray(preferredOrderNames) && preferredOrderNames.length){
             items.sort((a,b)=>{ const ia=preferredOrderNames.indexOf(a.name); const ib=preferredOrderNames.indexOf(b.name); return (ia===-1?9e6:ia) - (ib===-1?9e6:ib); });
@@ -345,24 +330,21 @@ async function generatePdfSerahTerima(){
         const sz = page.getSize();
 
         // baseline fallback
-        let x = sz.width * 0.493;  // fallback baseline
+        let x = sz.width * 0.493;
         let y = sz.height * 0.207;
 
-        const metaOk = meta
-          && meta.ver === META_VER
-          && typeof meta.x === 'number'
-          && typeof meta.y === 'number';
-
-        if (metaOk) {
-          x = meta.x + (meta.dx || 0);
-          y = meta.y + (meta.dy || 0);
-        } else {
+        // 1) Prioritas: META tersimpan saat upload
+        if (meta && typeof meta.x==='number' && typeof meta.y==='number') {
+          x = meta.x + (meta.dx||0);
+          y = meta.y + (meta.dy||0);
+        }
+        // 2) Jika meta tidak ada, tapi anchor on-the-fly ada → pakai anchor
+        else {
           const an = anchors[i];
-          if (an && typeof an.x === 'number' && typeof an.y === 'number') {
+          if (an && typeof an.x === 'number' && typeof an.y === 'number'){
             x = an.x; y = an.y;
           }
         }
-
         // ...set x,y dari meta atau anchor...
 
         // Geser global: negatif = ke kiri, positif = ke kanan
