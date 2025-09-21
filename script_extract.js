@@ -54,6 +54,79 @@ const output       = document.getElementById('output');
 const copyBtn      = document.getElementById('copyBtn');
 const lokasiSelect = document.getElementById('inputLokasi');
 
+// === AUTO-CALIBRATE: cari anchor "Diselesaikan Oleh," dan "Nama & Tanda Tangan" ===
+async function autoCalibratePdf(buffer){
+  const doc = await pdfjsLib.getDocument({ data: buffer }).promise;
+  const page = await doc.getPage(1);
+  const items = (await page.getTextContent()).items || [];
+
+  // "Diselesaikan Oleh," (kolom tengah)
+  let atas = items.find(it => /Diselesaikan\s*Oleh/i.test(it.str));
+  if(!atas){
+    for(let i=0;i<items.length-1;i++){
+      if(/Diselesaikan/i.test(items[i].str) && /Oleh/i.test(items[i+1].str)){ atas = items[i]; break; }
+    }
+  }
+  if (!atas){ try{doc.destroy()}catch{}; return null; }
+
+  const xA = atas.transform[4], yA = atas.transform[5];
+
+  // "Nama & Tanda Tangan" di bawahnya yang se-kolom
+  const kandidat = items.filter(it =>
+    /Nama\s*&?\s*Tanda\s*&?\s*Tangan/i.test(it.str) && it.transform && it.transform[5] < yA
+  );
+  let bawah=null, best=Infinity;
+  for(const it of kandidat){
+    const x = it.transform[4], y = it.transform[5];
+    const dx=Math.abs(x-xA), dy=Math.max(0,yA-y);
+    const score = 1.6*dx + dy;
+    if (dx <= 120 && score < best){ best = score; bawah = it; }
+  }
+
+  // titik dasar (x,y) untuk nama
+  let x = xA + 95;
+  let y = bawah ? (bawah.transform[5] + 12) : (yA - 32);
+
+  // (opsional) info baris UK & SOLUSI – bisa dipakai nanti, tidak wajib
+  const first = r => items.find(it => r.test(it.str));
+  const labUK = first(/Unit\s*Kerja/i), labKC = first(/Kantor\s*Cabang/i);
+  let linesUK = 0;
+  if (labUK && labKC){
+    const yTop = labUK.transform[5], yBot = labKC.transform[5]-1;
+    const xL = labUK.transform[4] + 40, xR = xL + 260;
+    const ys=[];
+    for(const it of items){
+      if(!it.transform) continue;
+      const x0=it.transform[4], y0=it.transform[5];
+      if (y0<=yTop+2 && y0>=yBot-2 && x0>=xL && x0<=xR){
+        const yy = Math.round(y0/2)*2;
+        if(!ys.some(v=>Math.abs(v-yy)<2)) ys.push(yy);
+      }
+    }
+    linesUK = Math.max(1, Math.min(5, ys.length||0));
+  }
+
+  const labSol = first(/Solusi\/?Perbaikan/i), labStatus = first(/Status\s*Pekerjaan/i);
+  let linesSOL = 0;
+  if (labSol && labStatus){
+    const yTop = labSol.transform[5] + 1, yBot = labStatus.transform[5] + 2;
+    const xL = labSol.transform[4] + 120, xR = xL + 300;
+    const ys=[];
+    for(const it of items){
+      if(!it.transform) continue;
+      const x0=it.transform[4], y0=it.transform[5];
+      if (y0>=yBot && y0<=yTop && x0>=xL && x0<=xR){
+        const yy = Math.round(y0/2)*2;
+        if(!ys.some(v=>Math.abs(v-yy)<2)) ys.push(yy);
+      }
+    }
+    linesSOL = Math.max(1, Math.min(6, ys.length||0));
+  }
+
+  try{ doc.destroy() }catch{}
+  return { x, y, linesUK, linesSOL, dx:0, dy:0, v:1 };
+}
+
 /* ========= IndexedDB ========= */
 const DB_NAME = "PdfStorage";
 const DB_VERSION = 1;
@@ -81,6 +154,15 @@ async function savePdfToIndexedDB_keepSchema(fileOrBlob, { contentHash } = {}) {
   if (blob.type !== 'application/pdf') throw new Error('Type bukan PDF');
   if (!blob.size) throw new Error('PDF kosong');
 
+  // === tambahkan ini ===
+  let meta = null;
+  try {
+    const buf = await blob.arrayBuffer();
+    meta = await autoCalibratePdf(buf);
+  } catch (e) {
+    console.warn('autoCalibrate gagal:', e);
+  }
+
   const database = await openDb();
   await new Promise((resolve, reject) => {
     const tx = database.transaction([STORE_NAME], 'readwrite');
@@ -90,11 +172,13 @@ async function savePdfToIndexedDB_keepSchema(fileOrBlob, { contentHash } = {}) {
       name: fileOrBlob.name || '(tanpa-nama)',
       dateAdded: new Date().toISOString(),
       data: blob,
-      contentHash: contentHash || null          // ← tambahan aman
+      contentHash: contentHash || null,
+      meta                                          // ← simpan di sini
     });
   });
-  console.log(`✅ Tersimpan: ${fileOrBlob.name} (${(blob.size/1024).toFixed(1)} KB)`);
+  console.log(`✅ Tersimpan: ${fileOrBlob.name} (${(blob.size/1024).toFixed(1)} KB), meta:`, meta);
 }
+
 
 /* ========= Helpers ========= */
 const clean = (x) => String(x || '')

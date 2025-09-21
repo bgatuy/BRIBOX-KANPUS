@@ -224,7 +224,7 @@ body[data-page="serah"] .table thead th {
   position:sticky; top:0; z-index:3;
   background:var(--serah-head-bg); color:var(--serah-head-ink);
   border-color:var(--serah-head-border); font-size:.85rem;
-  font-weight:700; padding:14px; text-align:center;
+  font-weight:700; padding:8px; text-align:center;
 }
 body[data-page="serah"] .table th.aksi,
 body[data-page="serah"] .table th.col-aksi { background:var(--serah-aksi-head); color:var(--serah-aksi-ink); }
@@ -243,20 +243,122 @@ body.dark-mode[data-page="serah"] .table th.col-aksi { background: #3b0a0a; colo
 body.dark-mode[data-page="serah"] .table td.aksi { background:#1f2937; box-shadow:-1px 0 0 #374151 inset; }
 body.dark-mode[data-page="serah"] .table tbody tr:nth-child(even){ background: #111827; }
 
-/* Controls bar */
-body[data-page="serah"] .controls-bar {
+/* ==== Controls bar (tetap) ==== */
+body[data-page="serah"] .controls-bar{
   display:flex; align-items:center; justify-content:space-between; gap:12px;
   margin:8px 0 10px; position:sticky; top:10px; z-index:6;
   background:#fff; border:1px solid #e5e7eb; border-radius:10px;
   padding:10px 12px; box-shadow:0 2px 8px rgba(0,0,0,.04);
 }
-body[data-page="serah"] .controls-left { display:flex; align-items:center; gap:10px; flex-wrap:wrap; }
-body[data-page="serah"] .controls-left label { font-weight:600; font-size:.95rem; }
-body[data-page="serah"] .controls-left input[type="date"] {
-  max-width:200px; padding:.55rem .65rem; font-size:.95rem;
-  border-radius:8px; text-align:center; text-align-last:center;
+
+/* ==== kiri: jadikan satu baris, urutan: label – input – label – select ==== */
+body[data-page="serah"] .controls-left{
+  display:grid;
+  grid-auto-flow: column;            /* item berbaris ke samping mengikuti urutan DOM */
+  grid-auto-columns: max-content;     /* lebar label mengikuti konten (tidak kepotong) */
+  gap: 12px;
+  align-items:center;
+  flex:1;                             /* supaya area kiri bisa melebar */
 }
-body[data-page="serah"] .controls-right.btn-row { gap:10px; margin:0; }
+
+/* label jangan membungkus */
+body[data-page="serah"] .controls-left label{
+  font-weight:600; font-size:.95rem; margin:0;
+  white-space:nowrap; word-break:keep-all;
+}
+
+/* date: ukuran pasti */
+body[data-page="serah"] .controls-left input[type="date"]{
+  width:160px; padding:.55rem .65rem; font-size:.95rem; border-radius:8px;
+  text-align:center; text-align-last:center;
+}
+
+/* select nama: yang melebar proporsional */
+body[data-page="serah"] .controls-left select{
+  width:clamp(260px, 42vw, 520px);
+  padding:.55rem .7rem; font-size:.95rem; border-radius:8px;
+}
+
+/* tombol kanan tetap */
+body[data-page="serah"] .controls-right.btn-row{ gap:10px; margin:0; }
+@media (max-width:768px){
+  body[data-page="serah"] .controls-bar{ flex-direction:column; align-items:stretch; top:6px; }
+
+  /* stack rapi saat mobile */
+  body[data-page="serah"] .controls-left{
+    grid-auto-flow: row;    /* jadi vertikal */
+    grid-auto-columns: auto;
+    gap:6px;
+    justify-items:stretch;
+  }
+  body.dark-mode .sidebar-toggle-btn { color:#fff; }
+  body[data-page="serah"] .controls-left input[type="date"],
+  body[data-page="serah"] .controls-left select{ width:100%; max-width:100%; }
+  body[data-page="serah"] .controls-right.btn-row{ justify-content:center; flex-wrap:wrap; }
+  body[data-page="serah"] .controls-right.btn-row button{ width:50%; max-width:150px; }
+
+  /* Select nama: caption & opsi di tengah */
+body[data-page="serah"] #selNamaTTD{
+  text-align:center;        /* sebagian browser */
+  text-align-last:center;   /* yang dipakai Chrome/Edge/Firefox untuk caption */
+}
+body[data-page="serah"] #selNamaTTD option{
+  text-align:left;        /* isi dropdown saat dibuka */
+}
+
+}
+
+/* Serah: desktop = 2 kolom (tanggal | nama), tombol di baris bawah */
+@media (min-width:1024px){
+  body[data-page="serah"] .controls-bar{
+    display:grid !important;
+    grid-template-columns: minmax(240px,1fr) minmax(360px,1.4fr);
+    grid-template-rows: auto auto auto; /* labels, fields, buttons */
+    gap:8px 16px;
+    align-items:end;
+  }
+
+  /* biar anak di .controls-left ikut grid parent */
+  body[data-page="serah"] .controls-bar > .controls-left{ display:contents; }
+
+  /* kolom kiri: label & input tanggal */
+  body[data-page="serah"] .controls-left label{ grid-column:1; grid-row:1; margin:0; white-space:nowrap; }
+  body[data-page="serah"] .controls-left input[type="date"]{ grid-column:1; grid-row:2; width:100%; }
+
+  /* kolom kanan: label & select nama */
+  body[data-page="serah"] .controls-bar > label[for="selNamaTTD"]{ grid-column:2; grid-row:1; margin:0; white-space:nowrap; }
+  body[data-page="serah"] #selNamaTTD{ grid-column:2; grid-row:2; width:100%; }
+
+  /* baris bawah: tombol di tengah */
+  body[data-page="serah"] .controls-right.btn-row{
+    grid-column:1 / -1; grid-row:3;
+    justify-content:center; gap:12px; flex-wrap:nowrap;
+  }
+  /* Serah: center text di input tanggal & select nama */
+body[data-page="serah"] .controls-bar input[type="date"]{
+  text-align:center;
+  text-align-last:center;   /* fallback beberapa browser */
+}
+
+/* WebKit (Chrome/Safari) perlu pseudo-element ini biar benar-benar center */
+body[data-page="serah"] .controls-bar input[type="date"]::-webkit-datetime-edit{
+  text-align:center;
+}
+
+/* Select nama: caption & opsi di tengah */
+body[data-page="serah"] #selNamaTTD{
+  text-align:center;        /* sebagian browser */
+  text-align-last:center;   /* yang dipakai Chrome/Edge/Firefox untuk caption */
+}
+body[data-page="serah"] #selNamaTTD option{
+  text-align:left;        /* isi dropdown saat dibuka */
+}
+
+}
+
+
+
+
 
 /* =========================
    EXTRA
@@ -330,13 +432,6 @@ body[data-page="serah"] .controls-right.btn-row { gap:10px; margin:0; }
     pointer-events:auto; font-size:1.6rem; flex:1; justify-content:center;
     display:flex; align-items:center; gap:8px;
   }
-  body.dark-mode .sidebar-toggle-btn { color:#fff; }
-  body[data-page="serah"] .controls-bar { flex-direction:column; align-items:stretch; top:6px; }
-  body[data-page="serah"] .controls-left { justify-content:center; }
-  body[data-page="serah"] .controls-right.btn-row { justify-content:center; flex-wrap:wrap; }
-  body[data-page="serah"] .controls-right.btn-row button { width:50%; max-width:150px; }
-  body[data-page="serah"] .controls-left label { font-size:.85rem; }
-  body[data-page="serah"] .controls-left input[type="date"]{ max-width:100%; }
 }
 
 @media (hover:none), (pointer:coarse){
