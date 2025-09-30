@@ -100,7 +100,7 @@ document.addEventListener('DOMContentLoaded', function () {
     ];
     // Kalau HTML sudah hard-coded, ini akan menimpa dengan list yang sama—aman.
     if (!teknisi.options.length || teknisi.firstElementChild?.value === "") {
-      teknisi.innerHTML = ['<option value="">-- Pilih Teknisi --</option>']
+      teknisi.innerHTML = ['<option value="">-- Pilih Nama --</option>']
         .concat(list.map(n=>`<option value="${n}">${n}</option>`)).join('');
     }
   }

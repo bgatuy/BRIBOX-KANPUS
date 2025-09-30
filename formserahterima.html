@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="id">
 <head>
-  <meta charset="UTF-8"/>
+  <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>BRIBOX KANPUS</title>
   <link rel="icon" type="image/png" href="./favicon.png" />
@@ -12,29 +12,32 @@
   <div class="dashboard">
     <aside class="sidebar">
       <h2 class="logo">
-      <img src="favicon.png" alt="Logo" class="logo-icon" />
-       BRIBOX KANPUS</h2>
-       
+        <img src="favicon.png" alt="Logo" class="logo-icon" />
+        BRIBOX KANPUS
+      </h2>
+
       <nav>
         <a href="index.html">📋 Trackmate</a>
         <a href="appsheet.html">📋 AppSheet</a>
         <a href="formserahterima.html" class="active">📝 Form Serah Terima</a>
+
         <!-- Parent collapsible Monthly Report -->
         <button class="nav-group" type="button"
-        aria-controls="nav-monthly" aria-expanded="false"
-        onclick="
-        const t=this, m=document.getElementById('nav-monthly');
-        const ex=t.getAttribute('aria-expanded')==='true';
-        t.setAttribute('aria-expanded', String(!ex)); 
-        m.hidden=ex;
-      ">
-      📅 Monthly Report
-    </button>
+          aria-controls="nav-monthly" aria-expanded="false"
+          onclick="
+            const t=this, m=document.getElementById('nav-monthly');
+            const ex=t.getAttribute('aria-expanded')==='true';
+            t.setAttribute('aria-expanded', String(!ex)); 
+            m.hidden=ex;
+          ">
+          📅 Monthly Report
+        </button>
 
-      <!-- Submenu Monthly -->
-      <div id="nav-monthly" class="submenu" hidden>
-        <a href="monthly-report/monthly-form.html">Monthly Report Form</a>
-        <a href="monthly-report/monthly-data.html">Monthly Report Data</a>
+        <!-- Submenu Monthly -->
+        <div id="nav-monthly" class="submenu" hidden>
+          <a href="monthly-report/monthly-form.html">Monthly Report Form</a>
+          <a href="monthly-report/monthly-data.html">Monthly Report Data</a>
+        </div>
       </nav>
     </aside>
 
@@ -47,71 +50,112 @@
 
       <div class="controls-bar">
         <div class="controls-left">
-        <label for="tglSerahTerima">Tanggal Serah Terima</label>
-        <input type="date" id="tglSerahTerima" name="tgl_serah_terima" />
-      </div>
-
-      <div class="controls-right btn-row">
-        <button id="btnGenerate" class="primary">Generate PDF</button>
-        <button id="btnReset" class="danger">Reset Histori</button>
-      </div>
-    </div>
-
-        <div class="table-wrap">
-          <table class="table">
-            <thead>
-              <tr>
-                <th style="text-align: center;">No.</th>
-                <th style="text-align: center;">Tanggal Serah Terima</th>
-                <th style="text-align: center;">Nama Uker</th>
-                <th style="text-align: center;">Tanggal Pekerjaan</th>
-                <th style="text-align: center;">File PDF</th>
-                <th style="text-align: center;">Aksi</th>
-              </tr>
-            </thead>
-            <tbody id="historiBody">
-              <tr><td colspan="6" style="text-align:center;">Belum ada data histori. Unggah PDF di Trackmate atau AppSheet.</td></tr>
-            </tbody>
-          </table>
+          <label for="tglSerahTerima">Tanggal Serah Terima</label>
+          <input type="date" id="tglSerahTerima" name="tgl_serah_terima" />
         </div>
-        
-      </section>
+
+        <label for="selNamaTTD">Input Nama Untuk Kolom TTD</label>
+        <select id="selNamaTTD">
+          <option value="">-- Pilih Nama --</option>
+          <option>Mochammad Fathur Rachman</option>
+          <option>Muhammad Farhan Baihaqi</option>
+          <option>Halviansyah Wildana</option>
+          <option>Dafa Farabi</option>
+          <option>Azriel Raja Simamora</option>
+          <option>Dimas Pujianto</option>
+        </select>
+
+        <div class="controls-right btn-row">
+          <button id="btnGenCombo" class="primary" title="Buat FORM CM lalu gabung dengan PDF asli terpilih">
+            Generate FST + PDF
+          </button>
+          <button id="btnGenCMOnly" title="Hanya buat FORM Tanda Terima CM">
+            Generate Form Serah Terima
+          </button>
+          <button id="btnGenFilesOnly" title="Gabungkan hanya PDF asli yang dipilih">
+            Generate File PDF
+          </button>
+          <button id="btnReset" class="danger" title="Hapus histori tersimpan">
+            Reset Histori
+          </button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table class="table">
+          <thead>
+            <tr>
+              <th style="text-align:center;"><input id="pickAll" type="checkbox" title="Pilih semua"></th>
+              <th style="text-align:center;">NO.</th>
+              <th style="text-align:center;">TANGGAL SERAH TERIMA</th>
+              <th style="text-align:center;">NAMA UKER</th>
+              <th style="text-align:center;">TANGGAL PEKERJAAN</th>
+              <th style="text-align:center;">FILE PDF</th>
+              <th style="text-align:center;">AKSI</th>
+            </tr>
+          </thead>
+          <tbody id="historiBody">
+            <tr>
+              <td colspan="7" style="text-align:center;">
+                Belum ada data histori. Unggah PDF di Trackmate atau AppSheet.
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Dialog pilih PDF asli (untuk Generate File PDF & Gabungan) -->
+      <dialog id="pickDialog">
+        <form method="dialog" style="min-width:420px;max-width:90vw">
+          <h3 style="margin:0 0 8px;">Pilih PDF Asli</h3>
+          <input id="pickSearch" type="search" placeholder="Cari nama file / uker..." style="width:100%;margin-bottom:8px;" />
+
+          <div style="max-height:45vh;overflow:auto;border:1px solid var(--border,#ddd);border-radius:8px;padding:8px;">
+            <label style="display:flex;gap:8px;align-items:center;margin-bottom:6px;">
+              <input id="pickAllDlg" type="checkbox" />
+              <b>Pilih semua</b>
+            </label>
+            <div id="pickList"></div>
+          </div>
+
+          <div style="display:flex;justify-content:flex-end;gap:8px;margin-top:10px;">
+            <button value="cancel" type="submit">Batal</button>
+            <button id="pickOk" value="ok" class="primary" type="submit">OK</button>
+          </div>
+        </form>
+      </dialog>
     </main>
   </div>
-  
 
   <script>
     // Aktifkan darkmode otomatis jika sebelumnya sudah diaktifkan
-  if (localStorage.getItem('darkMode') === 'true') {
-    document.body.classList.add('dark-mode');
-  }
-
-  // Perbarui ikon tombol sesuai status
-  document.addEventListener('DOMContentLoaded', () => {
-    const toggleBtn = document.getElementById('toggleModeBtn');
-    if (toggleBtn) {
-      toggleBtn.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.body.classList.add('dark-mode');
     }
-  });
 
-  function toggleDarkMode() {
-    const isDark = document.body.classList.toggle('dark-mode');
-    localStorage.setItem('darkMode', isDark); // simpan status ke localStorage
-    document.getElementById('toggleModeBtn').textContent = isDark ? '☀️' : '🌙';
-  }
+    // Perbarui ikon tombol sesuai status
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleBtn = document.getElementById('toggleModeBtn');
+      if (toggleBtn) {
+        toggleBtn.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+      }
+    });
 
-  function toggleSidebar() {
-    document.querySelector('.sidebar').classList.toggle('hidden');
-  }
+    function toggleDarkMode() {
+      const isDark = document.body.classList.toggle('dark-mode');
+      localStorage.setItem('darkMode', isDark);
+      document.getElementById('toggleModeBtn').textContent = isDark ? '☀️' : '🌙';
+    }
+
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('hidden');
+    }
   </script>
-  <!-- jsPDF -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 
-<!-- AutoTable -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
-
-
-<script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
+  <!-- jsPDF + AutoTable + pdf-lib -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.8.2/jspdf.plugin.autotable.min.js"></script>
+  <script src="https://unpkg.com/pdf-lib/dist/pdf-lib.min.js"></script>
 
   <script src="formserahterima.js"></script>
 </body>

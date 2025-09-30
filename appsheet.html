@@ -27,14 +27,13 @@
         const ex=t.getAttribute('aria-expanded')==='true';
         t.setAttribute('aria-expanded', String(!ex)); 
         m.hidden=ex;
-      ">
-      📅 Monthly Report
-    </button>
+      ">📅 Monthly Report</button>
 
       <!-- Submenu Monthly -->
-      <div id="nav-monthly" class="submenu" hidden>
-        <a href="monthly-report/monthly-form.html">Monthly Report Form</a>
-        <a href="monthly-report/monthly-data.html">Monthly Report Data</a>
+        <div id="nav-monthly" class="submenu" hidden>
+          <a href="monthly-report/monthly-form.html">Monthly Report Form</a>
+          <a href="monthly-report/monthly-data.html">Monthly Report Data</a>
+        </div>
       </nav>
     </aside>
 
@@ -139,33 +138,30 @@
       </section>
     </main>
   </div>
-
-  <!-- libs + scripts -->
+  
+  <script>
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.body.classList.add('dark-mode');
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleBtn = document.getElementById('toggleModeBtn');
+      if (toggleBtn) {
+        toggleBtn.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
+      }
+    });
+    function toggleDarkMode() {
+      const isDark = document.body.classList.toggle('dark-mode');
+      localStorage.setItem('darkMode', isDark);
+      document.getElementById('toggleModeBtn').textContent = isDark ? '☀️' : '🌙';
+    }
+    function toggleSidebar() {
+      document.querySelector('.sidebar').classList.toggle('hidden');
+    }
+  </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
   <script>
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-    // Aktifkan darkmode otomatis jika sebelumnya sudah diaktifkan
-  if (localStorage.getItem('darkMode') === 'true') {
-    document.body.classList.add('dark-mode');
-  }
-
-  // Perbarui ikon tombol sesuai status
-  document.addEventListener('DOMContentLoaded', () => {
-    const toggleBtn = document.getElementById('toggleModeBtn');
-    if (toggleBtn) {
-      toggleBtn.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
-    }
-  });
-
-  function toggleDarkMode() {
-    const isDark = document.body.classList.toggle('dark-mode');
-    localStorage.setItem('darkMode', isDark); // simpan status ke localStorage
-    document.getElementById('toggleModeBtn').textContent = isDark ? '☀️' : '🌙';
-  }
-
-  function toggleSidebar() {
-    document.querySelector('.sidebar').classList.toggle('hidden');
+    if (window.pdfjsLib && (!pdfjsLib.GlobalWorkerOptions.workerSrc || pdfjsLib.GlobalWorkerOptions.workerSrc === '')) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc ='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
   }
   </script>
   <script src="appsheet.js"></script>

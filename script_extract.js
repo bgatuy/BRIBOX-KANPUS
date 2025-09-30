@@ -1,11 +1,5 @@
 // ====== Trackmate ======
 
-// (Opsional) Set worker untuk pdf.js biar gak warning "GlobalWorkerOptions.workerSrc"
-if (window.pdfjsLib && (!pdfjsLib.GlobalWorkerOptions.workerSrc || pdfjsLib.GlobalWorkerOptions.workerSrc === '')) {
-  pdfjsLib.GlobalWorkerOptions.workerSrc =
-    'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-}
-
 /* ========= HASH UTIL (BARU) ========= */
 async function sha256File(file) {
   try {
@@ -54,46 +48,216 @@ const output       = document.getElementById('output');
 const copyBtn      = document.getElementById('copyBtn');
 const lokasiSelect = document.getElementById('inputLokasi');
 
-/* ========= IndexedDB ========= */
-const DB_NAME = "PdfStorage";
-const DB_VERSION = 1;
-const STORE_NAME = "pdfs";
+// === AUTO-CALIBRATE: cari anchor "Diselesaikan Oleh," dan "Nama & Tanda Tangan" ===
+async function autoCalibratePdf(buffer){
+  const doc = await pdfjsLib.getDocument({ data: buffer }).promise;
+  const page = await doc.getPage(1);
+  const items = (await page.getTextContent()).items || [];
+
+  // "Diselesaikan Oleh," (kolom tengah)
+  let atas = items.find(it => /Diselesaikan\s*Oleh/i.test(it.str));
+  if(!atas){
+    for(let i=0;i<items.length-1;i++){
+      if(/Diselesaikan/i.test(items[i].str) && /Oleh/i.test(items[i+1].str)){ atas = items[i]; break; }
+    }
+  }
+  if (!atas){ try{doc.destroy()}catch{}; return null; }
+
+  const xA = atas.transform[4], yA = atas.transform[5];
+
+  // "Nama & Tanda Tangan" di bawahnya yang se-kolom
+  const kandidat = items.filter(it =>
+    /Nama\s*&?\s*Tanda\s*&?\s*Tangan/i.test(it.str) && it.transform && it.transform[5] < yA
+  );
+  let bawah=null, best=Infinity;
+  for(const it of kandidat){
+    const x = it.transform[4], y = it.transform[5];
+    const dx=Math.abs(x-xA), dy=Math.max(0,yA-y);
+    const score = 1.6*dx + dy;
+    if (dx <= 120 && score < best){ best = score; bawah = it; }
+  }
+
+  // titik dasar (x,y) untuk nama
+  let x = xA + 95;
+  let y = bawah ? (bawah.transform[5] + 12) : (yA - 32);
+
+  // (opsional) info baris UK & SOLUSI – bisa dipakai nanti, tidak wajib
+  const first = r => items.find(it => r.test(it.str));
+  const labUK = first(/Unit\s*Kerja/i), labKC = first(/Kantor\s*Cabang/i);
+  let linesUK = 0;
+  if (labUK && labKC){
+    const yTop = labUK.transform[5], yBot = labKC.transform[5]-1;
+    const xL = labUK.transform[4] + 40, xR = xL + 260;
+    const ys=[];
+    for(const it of items){
+      if(!it.transform) continue;
+      const x0=it.transform[4], y0=it.transform[5];
+      if (y0<=yTop+2 && y0>=yBot-2 && x0>=xL && x0<=xR){
+        const yy = Math.round(y0/2)*2;
+        if(!ys.some(v=>Math.abs(v-yy)<2)) ys.push(yy);
+      }
+    }
+    linesUK = Math.max(1, Math.min(5, ys.length||0));
+  }
+
+  const labSol = first(/Solusi\/?Perbaikan/i), labStatus = first(/Status\s*Pekerjaan/i);
+  let linesSOL = 0;
+  if (labSol && labStatus){
+    const yTop = labSol.transform[5] + 1, yBot = labStatus.transform[5] + 2;
+    const xL = labSol.transform[4] + 120, xR = xL + 300;
+    const ys=[];
+    for(const it of items){
+      if(!it.transform) continue;
+      const x0=it.transform[4], y0=it.transform[5];
+      if (y0>=yBot && y0<=yTop && x0>=xL && x0<=xR){
+        const yy = Math.round(y0/2)*2;
+        if(!ys.some(v=>Math.abs(v-yy)<2)) ys.push(yy);
+      }
+    }
+    linesSOL = Math.max(1, Math.min(6, ys.length||0));
+  }
+
+  try{ doc.destroy() }catch{}
+  return { x, y, linesUK, linesSOL, dx:0, dy:0, v:1 };
+}
+
+//* ========= IndexedDB (UPDATED) ========= */
+const DB_NAME     = "PdfStorage";   // tetap
+const DB_VERSION  = 2;              // ↑ perlu untuk menambah store baru
+const STORE_NAME  = "pdfs";         // store lama (kompat)
+const STORE_BLOBS = "pdfBlobs";     // store baru: blob by contentHash
 let db;
 
+/** Open DB dan siapkan store lama & baru */
 function openDb() {
   return new Promise((resolve, reject) => {
     const request = indexedDB.open(DB_NAME, DB_VERSION);
+
     request.onupgradeneeded = (event) => {
-      db = event.target.result;
-      if (!db.objectStoreNames.contains(STORE_NAME)) {
-        db.createObjectStore(STORE_NAME, { keyPath: "id", autoIncrement: true });
+      const _db = event.target.result;
+      // Pastikan store lama ada (kompatibilitas)
+      if (!_db.objectStoreNames.contains(STORE_NAME)) {
+        _db.createObjectStore(STORE_NAME, { keyPath: "id", autoIncrement: true });
+      }
+      // Store baru untuk simpan/overwrite blob per contentHash
+      if (!_db.objectStoreNames.contains(STORE_BLOBS)) {
+        _db.createObjectStore(STORE_BLOBS, { keyPath: "contentHash" });
       }
     };
-    request.onsuccess = (event) => { db = event.target.result; resolve(db); };
-    request.onerror   = (event) => { console.error("IndexedDB error:", event.target.errorCode); reject(event.target.errorCode); };
+
+    request.onsuccess = (event) => {
+      db = event.target.result;
+      // Jika versi berubah di tab lain, tutup supaya tidak blocked
+      db.onversionchange = () => { try { db.close(); } catch {} db = null; };
+      resolve(db);
+    };
+
+    request.onerror = (event) => {
+      console.error("IndexedDB error:", event.target.error || event.target.errorCode);
+      reject(event.target.error || event.target.errorCode);
+    };
+
+    request.onblocked = () => {
+      console.warn("IndexedDB open blocked (mungkin ada tab lain masih terbuka).");
+    };
   });
 }
 
-// (BARU) simpan sambil titip contentHash, tanpa ubah skema store
+/** Pastikan koneksi DB siap dipakai (re-open jika null) */
+async function ensureDb() {
+  if (db) return db;
+  try { return await openDb(); }
+  catch (e) { console.warn("openDb gagal:", e); return null; }
+}
+
+/** Lifecycle: stabil setelah Back/Forward (bfcache) */
+window.addEventListener('pageshow', async (e) => {
+  if (e.persisted) {
+    // (opsional) reset file input di luar snippet ini: fileInput?.value = '';
+    await ensureDb();
+  }
+});
+window.addEventListener('pagehide', () => {
+  try { if (db) { db.close(); db = null; } } catch {}
+});
+
+/** === BARU ===
+ * Simpan blob PDF ke store baru, keyed by contentHash (overwrite-safe).
+ * Ini yang dipakai di handler "Copy" versi optimistic UI.
+ */
+async function saveBlobByHash(fileOrBlob, contentHash) {
+  const blob = fileOrBlob instanceof Blob ? fileOrBlob : null;
+  if (!blob) throw new Error("saveBlobByHash: argumen harus File/Blob");
+  if (blob.type !== "application/pdf") throw new Error("Type bukan PDF");
+  if (!blob.size) throw new Error("PDF kosong");
+  if (!contentHash) throw new Error("contentHash wajib");
+
+  const database = await ensureDb();
+  if (!database) throw new Error("IndexedDB tidak tersedia / gagal dibuka");
+
+  return new Promise((resolve, reject) => {
+    const tx = database.transaction([STORE_BLOBS], "readwrite");
+    const store = tx.objectStore(STORE_BLOBS);
+
+    const value = {
+      contentHash,
+      name: (/** @type {File} */(fileOrBlob)).name || "document.pdf",
+      size: blob.size,
+      dateAdded: new Date().toISOString(),
+      data: blob
+    };
+
+    const req = store.put(value);        // put = overwrite (tanpa double)
+    tx.oncomplete = () => resolve();
+    tx.onerror    = () => reject(tx.error || new Error("Tx error"));
+    req.onerror   = () => reject(req.error || new Error("Req error"));
+  });
+}
+
+/** === LAMA (dipertahankan untuk kompatibilitas) ===
+ * Simpan ke store lama `pdfs` + titip contentHash & meta.
+ * Sekarang sudah:
+ *  - pakai ensureDb()
+ *  - fail-fast yang jelas
+ */
 async function savePdfToIndexedDB_keepSchema(fileOrBlob, { contentHash } = {}) {
   const blob = fileOrBlob instanceof Blob ? fileOrBlob : null;
   if (!blob) throw new Error('savePdfToIndexedDB: argumen harus File/Blob');
   if (blob.type !== 'application/pdf') throw new Error('Type bukan PDF');
   if (!blob.size) throw new Error('PDF kosong');
 
-  const database = await openDb();
+  // (opsional) kalibrasi/ekstrak meta
+  let meta = null;
+  try {
+    const buf = await blob.arrayBuffer();
+    if (typeof autoCalibratePdf === "function") {
+      meta = await autoCalibratePdf(buf);
+    }
+  } catch (e) {
+    console.warn('autoCalibrate gagal:', e);
+  }
+
+  const database = await ensureDb();
+  if (!database) throw new Error("IndexedDB tidak tersedia / gagal dibuka");
+
   await new Promise((resolve, reject) => {
     const tx = database.transaction([STORE_NAME], 'readwrite');
-    tx.oncomplete = resolve;
-    tx.onerror = () => reject(tx.error || new Error('Tx error'));
-    tx.objectStore(STORE_NAME).add({
-      name: fileOrBlob.name || '(tanpa-nama)',
+    const store = tx.objectStore(STORE_NAME);
+    const payload = {
+      name: (/** @type {File} */(fileOrBlob)).name || '(tanpa-nama)',
       dateAdded: new Date().toISOString(),
       data: blob,
-      contentHash: contentHash || null          // ← tambahan aman
-    });
+      contentHash: contentHash || null,
+      meta
+    };
+    const req = store.add(payload);
+
+    tx.oncomplete = resolve;
+    tx.onerror    = () => reject(tx.error || new Error('Tx error'));
+    req.onerror   = () => reject(req.error || new Error('Req error'));
   });
-  console.log(`✅ Tersimpan: ${fileOrBlob.name} (${(blob.size/1024).toFixed(1)} KB)`);
+
+  console.log(`✅ Tersimpan (pdfs): ${fileOrBlob.name} (${(blob.size/1024).toFixed(1)} KB), meta:`, meta);
 }
 
 /* ========= Helpers ========= */
@@ -249,54 +413,104 @@ Status : ${status}`;
   if (output) output.textContent = finalOutput;
 }
 
-/* ========= Copy & Save Histori ========= */
+/* ========= Copy & Save Histori (single final toast) ========= */
 copyBtn?.addEventListener("click", async () => {
-  const textarea = document.createElement("textarea");
-  textarea.value = output?.textContent || '';
-  document.body.appendChild(textarea);
-  textarea.select();
-  document.execCommand("copy");
-  document.body.removeChild(textarea);
+  try {
+    // 0) Copy teks ke clipboard (pakai API modern + fallback)
+const text = (typeof output !== "undefined" && output?.textContent) ? output.textContent : "";
+try {
+  if (navigator.clipboard?.writeText) {
+    await navigator.clipboard.writeText(text);
+  } else {
+    const ta = document.createElement("textarea");
+    ta.value = text;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand("copy");
+    document.body.removeChild(ta);
+  }
+} catch (_) {
+  // diamkan; nanti toast tetap muncul
+}
+if (copyBtn) {
   copyBtn.textContent = "✔ Copied!";
   setTimeout(() => (copyBtn.textContent = "Copy"), 1500);
+}
 
-  const file = fileInput.files[0];
-  if (!file) return;
 
-  // === HASH BARU ===
-  const contentHash = await sha256File(file);
+    // 1) Validasi file
+    const file = fileInput?.files?.[0];
+    if (!file) { showToast("⚠ Tidak ada file PDF yang dipilih.", 3500, "warn"); return; }
 
-  const namaUkerBersih = stripLeadingColon(unitKerja) || '-';
-  const newEntry = {
-    namaUker: namaUkerBersih,
-    tanggalPekerjaan: tanggalRaw || '',
-    fileName: file.name || '-',
-    contentHash,                               // ← identitas isi file
-    size: file.size,
-    uploadedAt: new Date().toISOString()
-  };
+    // 2) Hash (pakai fallback jika hashing error)
+    let contentHash;
+    try { contentHash = await sha256File(file); }
+    catch { contentHash = `fz_${file.size}_${file.lastModified}_${Math.random().toString(36).slice(2,10)}`; }
 
-  const histori = JSON.parse(localStorage.getItem('pdfHistori')) || [];
+    // 3) Siapkan entri histori
+    const unitKerjaVal  = (typeof unitKerja === "string" ? unitKerja : (document.querySelector("#unitKerja")?.value || "")) || "";
+    const tanggalRawVal = (typeof tanggalRaw  === "string" ? tanggalRaw  : (document.querySelector("#tanggalPekerjaan")?.value || "")) || "";
+    const namaUkerBersih = (typeof stripLeadingColon === "function" ? (stripLeadingColon(unitKerjaVal) || "-") : (unitKerjaVal || "-"));
 
-  // DEDUPE BERDASARKAN HASH (file identik saja yang diblokir)
-  const exists = histori.some(x => x.contentHash === contentHash);
+    const newEntry = {
+      namaUker: namaUkerBersih,
+      tanggalPekerjaan: tanggalRawVal,
+      fileName: file.name || "-",
+      contentHash,
+      size: file.size,
+      uploadedAt: new Date().toISOString()
+    };
 
-  if (!exists) {
+    const histori = JSON.parse(localStorage.getItem('pdfHistori')) || [];
+    const exists = histori.some(x => x.contentHash === contentHash);
+
+    // 4) Jika sudah ada ⇒ 1 toast biru (info), selesai
+    if (exists) {
+      showToast("ℹ Sudah ada di histori.", 3000, "info");
+      return;
+    }
+
+    // 5) Belum ada ⇒ simpan ke histori (localStorage), lalu coba simpan file ke IDB
     histori.push(newEntry);
     localStorage.setItem('pdfHistori', JSON.stringify(histori));
-    await savePdfToIndexedDB_keepSchema(file, { contentHash }); // Simpan File asli + hash
-    showToast(`✔ berhasil disimpan ke histori.`);
-  } else {
-    showToast(`ℹ sudah ada di histori.`);
+
+    const TIMEOUT_MS = 3000; // 3s batas tunggu supaya gak lama
+    try {
+      await Promise.race([
+        savePdfToIndexedDB_keepSchema(file, { contentHash }),  // simpan file asli + hash
+        new Promise((_, rej) => setTimeout(() => rej(new Error("IDB timeout")), TIMEOUT_MS))
+      ]);
+
+      // Sukses penuh ⇒ 1 toast hijau
+      showToast("✔ Berhasil disimpan ke histori, Beserta file PDF asli.", 3000, "success");
+
+    } catch (err) {
+      console.warn("IndexedDB gagal/timeout:", err);
+      // Histori sudah tersimpan, tapi file asli gagal ⇒ 1 toast kuning
+      showToast("⚠ Histori disimpan. File PDF asli gagal disimpan (Refresh Page & Input kembali file yang sama).", 5000, "warn");
+    }
+
+  } catch (err) {
+    console.error("Copy handler error:", err);
+    showToast(`❌ Error: ${err?.message || err}`, 4500, "warn");
   }
 });
 
-function showToast(message, duration = 3000) {
+/* ========= Toast util: tambah 'variant' untuk warna (tanpa ubah CSS file) =========
+   variant: "success" (hijau), "info" (biru), "warn" (kuning)
+*/
+function showToast(message, duration = 3000, variant = "success") {
   const toast = document.createElement('div');
-  toast.className = 'toast';
-  toast.textContent = message;
+  toast.className = 'toast';              // tetap pakai kelas lama
+  toast.textContent = String(message);
+
+  // override background via inline style (tak perlu ubah CSS file)
+  const bg = variant === "info" ? "#0d6efd" : variant === "warn" ? "#f0ad4e" : "#28a745";
+  toast.style.background = bg;
+
   document.body.appendChild(toast);
   setTimeout(() => toast.classList.add('show'), 10);
+
   const remove = () => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); };
   toast.addEventListener('click', remove);
   setTimeout(remove, duration);

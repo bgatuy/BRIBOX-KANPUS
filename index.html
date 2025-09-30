@@ -10,53 +10,57 @@
 </head>
 <body>
   <div class="dashboard">
+    <!-- Sidebar -->
     <aside class="sidebar">
       <h2 class="logo">
-      <img src="favicon.png" alt="Logo" class="logo-icon" />
-       BRIBOX KANPUS</h2>
-       
-     <nav>
+        <img src="favicon.png" alt="Logo" class="logo-icon" />
+        BRIBOX KANPUS
+      </h2>
+
+      <nav>
         <a href="index.html" class="active">📋 Trackmate</a>
         <a href="appsheet.html">📋 AppSheet</a>
         <a href="formserahterima.html">📝 Form Serah Terima</a>
+
         <!-- Parent collapsible Monthly Report -->
         <button class="nav-group" type="button"
-        aria-controls="nav-monthly" aria-expanded="false"
-        onclick="
-        const t=this, m=document.getElementById('nav-monthly');
-        const ex=t.getAttribute('aria-expanded')==='true';
-        t.setAttribute('aria-expanded', String(!ex)); 
-        m.hidden=ex;
-      ">
-      📅 Monthly Report
-    </button>
+          aria-controls="nav-monthly" aria-expanded="false"
+          onclick="
+            const t=this, m=document.getElementById('nav-monthly');
+            const ex=t.getAttribute('aria-expanded')==='true';
+            t.setAttribute('aria-expanded', String(!ex));
+            m.hidden=ex;
+          ">📅 Monthly Report</button>
 
-      <!-- Submenu Monthly -->
-      <div id="nav-monthly" class="submenu" hidden>
-        <a href="monthly-report/monthly-form.html">Monthly Report Form</a>
-        <a href="monthly-report/monthly-data.html">Monthly Report Data</a>
+        <!-- Submenu Monthly -->
+        <div id="nav-monthly" class="submenu" hidden>
+          <a href="monthly-report/monthly-form.html">Monthly Report Form</a>
+          <a href="monthly-report/monthly-data.html">Monthly Report Data</a>
+        </div>
       </nav>
     </aside>
 
     <!-- Main -->
     <main class="main">
       <header class="dashboard-header">
-        <button class="sidebar-toggle-btn" onclick="toggleSidebar()">☰</button>
-        <h1><span class="material-icons">assignment</span> Trackmate</h1>
-        <button id="toggleModeBtn" onclick="toggleDarkMode()">🌙</button>
+        <button class="sidebar-toggle-btn" type="button" onclick="toggleSidebar()">☰</button>
+        <h1><span class="material-icons" aria-hidden="true">assignment</span> Trackmate</h1>
+        <button id="toggleModeBtn" type="button" onclick="toggleDarkMode()" aria-pressed="false" aria-label="Toggle dark mode">🌙</button>
       </header>
 
       <section class="card">
         <h3>Upload Form PDF Kalian Disini Lalu Pilih Lokasi Divisi!</h3>
-        
+
         <label for="pdfFile" class="upload-label">
-          <span class="material-icons">picture_as_pdf</span> Pilih File PDF</label>
+          <span class="material-icons" aria-hidden="true">picture_as_pdf</span>
+          Pilih File PDF
+        </label>
         <input type="file" id="pdfFile" accept="application/pdf" />
 
         <div class="form-group">
           <label for="inputLokasi">Pilih Lokasi Divisi :</label>
           <select id="inputLokasi">
-            <option value="">-- Pilih Lokasi --</option>            
+            <option value="">-- Pilih Lokasi --</option>
             <option value="BRI 1 Lt. Split">BRI 1 Lt. Split</option>
             <option value="BRI 1 Lt. 2">BRI 1 Lt. 2</option>
             <option value="BRI 1 Lt. 3">BRI 1 Lt. 3</option>
@@ -135,40 +139,43 @@
         </div>
 
         <pre id="output" class="output-preview">Text akan muncul di sini...</pre>
-        <button id="copyBtn" class="btn-copy primary">Copy</button>
+        <button id="copyBtn" class="btn-copy primary" type="button">Copy</button>
       </section>
     </main>
   </div>
 
-  <!-- libs + scripts -->
+  <script>
+    if (localStorage.getItem('darkMode') === 'true') {
+      document.body.classList.add('dark-mode');
+    }
+    document.addEventListener('DOMContentLoaded', () => {
+      const toggleBtn = document.getElementById('toggleModeBtn');
+      if (toggleBtn) {
+        const isDark = document.body.classList.contains('dark-mode');
+        toggleBtn.textContent = isDark ? '☀️' : '🌙';
+        toggleBtn.setAttribute('aria-pressed', String(isDark));
+      }
+    });
+    function toggleDarkMode() {
+      const isDark = document.body.classList.toggle('dark-mode');
+      localStorage.setItem('darkMode', isDark);
+      const btn = document.getElementById('toggleModeBtn');
+      if (btn) {
+        btn.textContent = isDark ? '☀️' : '🌙';
+        btn.setAttribute('aria-pressed', String(isDark));
+      }
+    }
+    function toggleSidebar() {
+      document.querySelector('.sidebar')?.classList.toggle('hidden');
+    }
+  </script>
+  
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
   <script>
-    // wajib untuk pdf.js 3+
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-    // Aktifkan darkmode otomatis jika sebelumnya sudah diaktifkan
-  if (localStorage.getItem('darkMode') === 'true') {
-    document.body.classList.add('dark-mode');
-  }
-
-  // Perbarui ikon tombol sesuai status
-  document.addEventListener('DOMContentLoaded', () => {
-    const toggleBtn = document.getElementById('toggleModeBtn');
-    if (toggleBtn) {
-      toggleBtn.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
-    }
-  });
-
-  function toggleDarkMode() {
-    const isDark = document.body.classList.toggle('dark-mode');
-    localStorage.setItem('darkMode', isDark); // simpan status ke localStorage
-    document.getElementById('toggleModeBtn').textContent = isDark ? '☀️' : '🌙';
-  }
-
-  function toggleSidebar() {
-    document.querySelector('.sidebar').classList.toggle('hidden');
-  }
+    if (window.pdfjsLib && (!pdfjsLib.GlobalWorkerOptions.workerSrc || pdfjsLib.GlobalWorkerOptions.workerSrc === '')) {
+      pdfjsLib.GlobalWorkerOptions.workerSrc ='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';}
   </script>
+
   <script src="script_extract.js"></script>
 </body>
 </html>
