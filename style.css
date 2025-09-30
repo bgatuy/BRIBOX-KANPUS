@@ -231,113 +231,133 @@ td.aksi, .col-aksi { white-space:nowrap; }
 td.aksi .btn-del, td.aksi .btn-delete { padding:8px 12px; font-weight:700; }
 
 /* =========================
-   SERAH PAGE CUSTOM
+   SERAH PAGE CUSTOM (UPDATED)
 ========================= */
-:root {
-  --serah-head-bg: #2563EB; --serah-head-ink:#fff; --serah-head-border: #d6e8ff;
+:root{
+  --serah-head-bg:#2563EB; --serah-head-ink:#fff; --serah-head-border:#d6e8ff;
   --serah-aksi-head:#ffe8e8; --serah-aksi-ink:#7f1d1d;
   --serah-row-even:#fafcff; --serah-row-hover:#f3f9ff;
 }
-body[data-page="serah"] .table-wrap { max-height:70vh; overflow:auto; border-radius:10px; }
-body[data-page="serah"] .table thead th {
+
+body[data-page="serah"] .table-wrap{
+  max-height:70vh;
+  overflow:auto;
+  border-radius:10px;
+  -webkit-overflow-scrolling:touch;      /* NEW: smooth scroll on mobile */
+}
+
+/* tabel: pastikan tidak gepeng di HP */
+body[data-page="serah"] .table{ min-width:760px; }        /* NEW */
+body[data-page="serah"] .table th,
+body[data-page="serah"] .table td{ white-space:nowrap; }  /* NEW */
+
+body[data-page="serah"] .table thead th{
   position:sticky; top:0; z-index:3;
   background:var(--serah-head-bg); color:var(--serah-head-ink);
-  border-color:var(--serah-head-border); font-size:.85rem;
-  font-weight:700; padding:8px; text-align:center;
+  border-color:var(--serah-head-border);
+  font-size:.85rem; font-weight:700; padding:8px; text-align:center;
 }
 body[data-page="serah"] .table th.aksi,
-body[data-page="serah"] .table th.col-aksi { background:var(--serah-aksi-head); color:var(--serah-aksi-ink); }
-body[data-page="serah"] .table td { text-align:center; vertical-align:middle; padding:5px; }
+body[data-page="serah"] .table th.col-aksi{
+  background:var(--serah-aksi-head); color:var(--serah-aksi-ink);
+}
+body[data-page="serah"] .table td{
+  text-align:center; vertical-align:middle; padding:5px;
+}
 body[data-page="serah"] .table th.aksi,
-body[data-page="serah"] .table td.aksi { text-align:center; position:sticky; right:0; z-index:4; background:#fff; box-shadow:-1px 0 0 #e3e3e3 inset; }
+body[data-page="serah"] .table td.aksi{
+  text-align:center; position:sticky; right:0; z-index:4;
+  background:#fff; box-shadow:-1px 0 0 #e3e3e3 inset;
+}
 body[data-page="serah"] .table tbody tr:nth-child(even){ background:var(--serah-row-even); }
 @media (hover:hover) and (pointer:fine){
   body[data-page="serah"] .table tbody tr:hover{ background:var(--serah-row-hover); }
 }
 
 /* Dark mode tweak */
-body.dark-mode[data-page="serah"] .table thead th { background: #2563EB; color: #e5e7eb; border-color: #1f2937; }
+body.dark-mode[data-page="serah"] .table thead th{
+  background:#2563EB; color:#e5e7eb; border-color:#1f2937;
+}
 body.dark-mode[data-page="serah"] .table th.aksi,
-body.dark-mode[data-page="serah"] .table th.col-aksi { background: #3b0a0a; color: #fdecec; }
-body.dark-mode[data-page="serah"] .table td.aksi { background:#1f2937; box-shadow:-1px 0 0 #374151 inset; }
-body.dark-mode[data-page="serah"] .table tbody tr:nth-child(even){ background: #111827; }
+body.dark-mode[data-page="serah"] .table th.col-aksi{
+  background:#3b0a0a; color:#fdecec;
+}
+body.dark-mode[data-page="serah"] .table td.aksi{
+  background:#1f2937; box-shadow:-1px 0 0 #374151 inset;
+}
+body.dark-mode[data-page="serah"] .table tbody tr:nth-child(even){ background:#111827; }
 
 /* ===== SERAH: layout 2 kolom rapi + tombol di bawah ===== */
 body[data-page="serah"] .controls-bar{
-  --ctl-h: 36px;
-  max-width: 980px;                   /* batasi lebar & center */
-  margin: 8px auto 10px;
-  display: grid !important;
-  grid-template-columns: 1fr 1fr;     /* kolom imbang */
-  grid-template-rows: auto auto auto; /* labels, fields, buttons */
+  --ctl-h:36px;
+  max-width:980px;
+  margin:8px auto 10px;
+  display:grid !important;
+  grid-template-columns:1fr 1fr;
+  grid-template-rows:auto auto auto;
   grid-template-areas:
     "lblDate  lblName"
     "fldDate  fldName"
     "btnRow   btnRow";
-  column-gap: 18px;
-  row-gap: 8px;
-  align-items: end;
+  column-gap:18px; row-gap:8px; align-items:end;
 }
 
 /* Flatten wrapper kiri supaya anak-anaknya ikut grid parent */
-body[data-page="serah"] .controls-bar > .controls-left{ display: contents; }
+body[data-page="serah"] .controls-bar > .controls-left{ display:contents; }
 
-/* === Area mapping berbasis id/for (robust) === */
-body[data-page="serah"] label[for="tglSerahTerima"]{ grid-area: lblDate; }
-body[data-page="serah"] #tglSerahTerima{ grid-area: fldDate; width:100%; }
+/* Area mapping berbasis id/for */
+body[data-page="serah"] label[for="tglSerahTerima"]{ grid-area:lblDate; }
+body[data-page="serah"] #tglSerahTerima{ grid-area:fldDate; width:100%; }
+body[data-page="serah"] label[for="selNamaTTD"]{ grid-area:lblName; }
+body[data-page="serah"] #selNamaTTD{ grid-area:fldName; width:100%; }
 
-body[data-page="serah"] label[for="selNamaTTD"]{ grid-area: lblName; }
-body[data-page="serah"] #selNamaTTD{ grid-area: fldName; width:100%; }
-
-/* Tombol baris bawah, center */
+/* Tombol baris bawah */
 body[data-page="serah"] .controls-right.btn-row{
-  grid-area: btnRow;
-  justify-content: center;
-  gap: 14px;
-  flex-wrap: nowrap;
-  margin: 0;
+  grid-area:btnRow;
+  display:flex;                 /* NEW: pastikan flex */
+  justify-content:center;
+  gap:14px;
+  flex-wrap:nowrap;
+  margin:0;
 }
 
-/* Label & kontrol: konsisten tinggi */
+/* Label & kontrol */
 body[data-page="serah"] .controls-bar label{
-  font-weight: 600; font-size: .95rem; margin: 0; white-space: nowrap;
+  font-weight:600; font-size:.95rem; margin:0; white-space:nowrap;
 }
 body[data-page="serah"] #tglSerahTerima,
 body[data-page="serah"] #selNamaTTD{
-  box-sizing: border-box;
-  height: var(--ctl-h);
-  padding: 0 10px;
-  font-size: .95rem;
-  border-radius: 8px;
+  box-sizing:border-box; height:var(--ctl-h); padding:0 10px;
+  font-size:.95rem; border-radius:8px;
 }
 body[data-page="serah"] #tglSerahTerima{
-  text-align: center; line-height: calc(var(--ctl-h) - 2px);
+  text-align:center; line-height:calc(var(--ctl-h) - 2px);
 }
 body[data-page="serah"] #tglSerahTerima::-webkit-datetime-edit{ padding:0; text-align:center; line-height:inherit; }
 body[data-page="serah"] #tglSerahTerima::-webkit-calendar-picker-indicator{ margin:0 6px 0 8px; }
 
-/* Tombol diseragamkan tingginya dengan field */
+/* Tombol: tinggi seragam */
 body[data-page="serah"] .controls-right.btn-row button{
-  height: var(--ctl-h);
-  line-height: calc(var(--ctl-h) - 2px);
-  padding: 0 15px;
-  border-radius: 8px;
-  font-weight: 600;
+  height:var(--ctl-h);
+  line-height:calc(var(--ctl-h) - 2px);
+  padding:0 15px; border-radius:8px; font-weight:600;
 }
 
-/* ====== Mobile: stack vertikal ====== */
-@media (max-width: 768px){
+/* ===== Mobile: stack vertikal ===== */
+@media (max-width:768px){
   body[data-page="serah"] .controls-bar{
-    max-width: 100%;
-    grid-template-columns: 1fr;
+    max-width:100%;
+    grid-template-columns:1fr;
     grid-template-areas:
       "lblDate" "fldDate"
       "lblName" "fldName"
       "btnRow";
-    row-gap: 6px;
-    --ctl-h: 36px;
+    row-gap:6px;
+    --ctl-h:36px;
   }
+  body[data-page="serah"] .controls-right.btn-row{ flex-wrap:wrap; } /* NEW */
 }
+
 
 /* =========================
    EXTRA
@@ -356,6 +376,25 @@ body[data-page="serah"] .controls-right.btn-row button{
 }
 .toast.show { opacity:1; transform:translateY(0); }
 .logo-icon { width:50px; height:50px; vertical-align:middle; }
+
+/* TOAST – kecil, terapung di tengah atas */
+.toast{
+  position:fixed;
+  left:50%; top:16px; transform:translateX(-50%) translateY(-6px);
+  max-width:min(520px, 92vw);
+  padding:10px 12px;
+  border-radius:10px;
+  color:#fff;
+  z-index:99999;
+  box-shadow:0 8px 24px rgba(0,0,0,.18);
+  opacity:0; transition:opacity .2s ease, transform .2s ease;
+  font-size:14px; line-height:1.2;
+}
+.toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+@media (max-width:480px){
+  .toast{ font-size:13px; padding:8px 10px; }
+}
+
 
 /* =========================
    RESPONSIVE
