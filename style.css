@@ -96,7 +96,7 @@ body[data-page="serah"] .controls-bar {
   display:inline-flex; align-items:center; gap:8px;
 }
 .sidebar-credit b,
-.page-credit b{ color: #0f172a; }       /* slate-900 */
+.page-credit b{ color: #94a3b8; }       /* slate-900 */
 body.dark-mode .sidebar-credit,
 body.dark-mode .page-credit{ color: #cbd5e1; }   /* slate-300 */
 body.dark-mode .sidebar-credit b,
@@ -120,9 +120,34 @@ body.dark-mode .page-credit::before{
   position:absolute; right:24px; top:50%; transform:translateY(-50%);
   background:transparent; padding:0; border:0;
 }
-@media (max-width:768px){
-  .page-credit{ position:static; transform:none; margin-top:6px; }
+/* === Sidebar credit — mobile shrink & align === */
+@media (max-width: 768px){
+  .sidebar-credit{
+    font-size: 10px;      /* sedikit lebih kecil dari desktop */
+    line-height: 1.05;
+    gap: 6px;               /* jarak titik ↔ teks diperkecil */
+    padding: 8px 10px;      /* ruang dalam diperkecil biar sejajar border */
+    white-space: nowrap;    /* cegah pecah baris */
+    overflow: hidden;       /* jaga biar tetap satu baris */
+    text-overflow: ellipsis;/* kalau tetap kepanjangan, pakai elipsis */
+  }
+  .sidebar-credit::before{
+    width: 7px;             /* titik sedikit lebih kecil */
+    height: 7px;
+    translate: 0 .5px;      /* sejajarkan dengan teks kecil */
+  }
 }
+
+/* opsional: layar sangat kecil, rapetin lagi */
+@media (max-width: 360px){
+  .sidebar-credit{
+    font-size: 10px;
+    gap: 5px;
+    padding: 7px 10px;
+  }
+  .sidebar-credit::before{ width: 6.5px; height: 6.5px; }
+}
+
 
 /* versi sidebar: nempel bawah */
 .sidebar-credit{ margin-top:auto; padding:10px 12px; border-top:1px solid rgba(255,255,255,.06); }
