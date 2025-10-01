@@ -466,7 +466,7 @@ if (copyBtn) {
 
     // 4) Jika sudah ada ⇒ 1 toast biru (info), selesai
     if (exists) {
-      showToast("ℹ Sudah ada di histori.", 3000, "info");
+      showToast("ℹ Sudah ada di histori", 3000, "info");
       return;
     }
 
@@ -482,7 +482,7 @@ if (copyBtn) {
       ]);
 
       // Sukses penuh ⇒ 1 toast hijau
-      showToast("✔ Berhasil disimpan ke histori, Beserta file PDF asli.", 3000, "success");
+      showToast("✔ Berhasil disimpan ke histori", 3000, "success");
 
     } catch (err) {
       console.warn("IndexedDB gagal/timeout:", err);
