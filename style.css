@@ -88,6 +88,46 @@ body[data-page="serah"] .controls-bar {
   box-shadow: 0 2px 8px rgba(0,0,0,.04);
 }
 
+/* —— Credit: titik bulet + teks —— */
+.sidebar-credit,
+.page-credit{
+  font-size:11px; line-height:1; opacity:.95;
+  color: #94a3b8;        /* slate-400 */
+  display:inline-flex; align-items:center; gap:8px;
+}
+.sidebar-credit b,
+.page-credit b{ color: #0f172a; }       /* slate-900 */
+body.dark-mode .sidebar-credit,
+body.dark-mode .page-credit{ color: #cbd5e1; }   /* slate-300 */
+body.dark-mode .sidebar-credit b,
+body.dark-mode .page-credit b{ color: #e5e7eb; }
+
+/* titik bulet di depan */
+.sidebar-credit::before,
+.page-credit::before{
+  content:""; width:8px; height:8px; border-radius:50%;
+  background: #94a3b8;                 /* green-500 */
+  box-shadow:0 0 0 2px rgba(34,197,94,.18);
+  translate:0 1px;                     /* sejajarkan dengan teks */
+}
+body.dark-mode .sidebar-credit::before,
+body.dark-mode .page-credit::before{
+  background: #e5e7eb; box-shadow:0 0 0 2px rgba(52,211,153,.18);
+}
+
+/* posisi khusus versi header */
+.page-credit{
+  position:absolute; right:24px; top:50%; transform:translateY(-50%);
+  background:transparent; padding:0; border:0;
+}
+@media (max-width:768px){
+  .page-credit{ position:static; transform:none; margin-top:6px; }
+}
+
+/* versi sidebar: nempel bawah */
+.sidebar-credit{ margin-top:auto; padding:10px 12px; border-top:1px solid rgba(255,255,255,.06); }
+
+
 
 /* =========================
    CARDS & FORMS
