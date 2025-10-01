@@ -496,22 +496,55 @@ if (copyBtn) {
   }
 });
 
-/* ========= Toast util: tambah 'variant' untuk warna (tanpa ubah CSS file) =========
-   variant: "success" (hijau), "info" (biru), "warn" (kuning)
+/* ========= Toast util (FAST & RELIABLE, mobile friendly) =========
+   Pakai: showToast("Berhasil", 3000, "success"|"info"|"warn")
 */
 function showToast(message, duration = 3000, variant = "success") {
-  const toast = document.createElement('div');
-  toast.className = 'toast';              // tetap pakai kelas lama
-  toast.textContent = String(message);
+  // 1) Ambil / buat elemen tunggal
+  let el = document.querySelector(".toast");
+  if (!el) {
+    el = document.createElement("div");
+    el.className = "toast";
+    el.setAttribute("role", "status");
+    el.setAttribute("aria-live", "polite");
+    document.body.appendChild(el);
+  }
 
-  // override background via inline style (tak perlu ubah CSS file)
-  const bg = variant === "info" ? "#0d6efd" : variant === "warn" ? "#f0ad4e" : "#28a745";
-  toast.style.background = bg;
+  // 2) Tema warna sederhana via inline style (kompatibel dengan CSS kamu)
+  const bg =
+    variant === "info" ? "#0d6efd" :
+    variant === "warn" ? "#f59e0b" :
+    "#28a745";
+  el.style.background = bg;
 
-  document.body.appendChild(toast);
-  setTimeout(() => toast.classList.add('show'), 10);
+  // 3) Set teks & reset state
+  el.textContent = String(message);
+  el.classList.remove("show", "hiding");
+  if (el._hideTimer) clearTimeout(el._hideTimer);
 
-  const remove = () => { toast.classList.remove('show'); setTimeout(() => toast.remove(), 300); };
-  toast.addEventListener('click', remove);
-  setTimeout(remove, duration);
+  // 4) iOS-safe: commit style dulu baru tambahkan .show (double rAF)
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      el.classList.add("show");
+    });
+  });
+
+  // 5) Auto-hide + cleanup setelah transisi
+  el._hideTimer = setTimeout(() => {
+    el.classList.add("hiding");
+    el.classList.remove("show");
+    const onEnd = () => {
+      el.classList.remove("hiding");
+      el.removeEventListener("transitionend", onEnd);
+    };
+    el.addEventListener("transitionend", onEnd, { once: true });
+  }, duration);
+
+  // 6) Klik untuk tutup cepat (opsional)
+  el.onclick = () => {
+    if (el._hideTimer) clearTimeout(el._hideTimer);
+    el.classList.add("hiding");
+    el.classList.remove("show");
+  };
 }
+

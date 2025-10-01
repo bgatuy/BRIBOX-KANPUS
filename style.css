@@ -366,25 +366,45 @@ body[data-page="serah"] .controls-bar{
     min-width: 900px;                  /* picu X-scroll di HP */
   }
 }
-/* =========================
-   TOAST (ringan & responsive)
-========================= */
+/* ===== TOAST — Mobile cepat & pasti muncul ===== */
 .toast{
-  position:fixed;
-  top:16px; right:16px;
-  background:#28a745; color:#fff;
-  padding:8px 12px;
-  border-radius:8px;
-  box-shadow:0 0 12px rgba(0,0,0,.2);
-  z-index:9999;
-  opacity:0; transform:translateY(-16px);
-  transition:all .25s ease;
-  cursor:pointer; font-size:14px;
-  max-width:90vw;
+  /* posisi & tampilan tetap sesuai punyamu */
+  position: fixed;
+  top: max(12px, env(safe-area-inset-top));
+  right: 12px;
+  z-index: 9999;
+  color: #fff;
+  padding: 8px 12px;
+  border-radius: 8px;
+  box-shadow: 0 6px 12px rgba(0,0,0,.18);
+  max-width: 90vw;
+  cursor: pointer;
+  font-size: 14px;
+
+  /* animasi ringan (jangan 'all'), pakai GPU path */
+  opacity: 0;
+  transform: translate3d(0,-10px,0);
+  transition: opacity .16s ease-out, transform .16s ease-out;
+  will-change: opacity, transform;
+  backface-visibility: hidden;
 }
-.toast.show{ opacity:1; transform:translateY(0); }
+.toast.show{
+  opacity: 1;
+  transform: translate3d(0,0,0);
+}
+.toast.hiding{
+  opacity: 0;
+  transform: translate3d(0,-6px,0);
+}
+
+/* mobile sizing kecil */
 @media (max-width:480px){
-  .toast{ font-size:12px; padding:7px 10px; right:12px; top:12px; }
+  .toast{ font-size:12px; padding:7px 10px; right:12px; }
+}
+
+/* accessibility: hormati reduced motion */
+@media (prefers-reduced-motion: reduce){
+  .toast{ transition: none; }
 }
 
 
