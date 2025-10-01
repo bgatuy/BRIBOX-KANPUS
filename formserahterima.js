@@ -81,12 +81,6 @@ function ensureLibsOrThrow(opts = { requireJsPDF: false, requirePDFLib: true, re
   if (opts.requireJsPDF && !window.jspdf?.jsPDF) throw new Error("jsPDF belum dimuat.");
   if (opts.requirePDFLib && !window.PDFLib?.PDFDocument) throw new Error("pdf-lib belum dimuat.");
   if (opts.requirePdfjs && !window.pdfjsLib?.getDocument) throw new Error("pdf.js belum dimuat.");
-  // kalau pdf.js tidak diwajibkan tapi ada, set workerSrc (biar aman)
-  if (window.pdfjsLib?.GlobalWorkerOptions && !pdfjsLib.GlobalWorkerOptions.workerSrc) {
-    // sesuaikan ke path kamu sendiri kalau pakai lokal/CDN beda
-    pdfjsLib.GlobalWorkerOptions.workerSrc =
-      "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
-  }
 }
 
 /********************

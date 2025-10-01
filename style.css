@@ -91,7 +91,7 @@ body[data-page="serah"] .controls-bar {
 /* —— Credit: titik bulet + teks —— */
 .sidebar-credit,
 .page-credit{
-  font-size:11px; line-height:1; opacity:.95;
+  font-size:11px; line-height:1.5; opacity:.95;
   color: #94a3b8;        /* slate-400 */
   display:inline-flex; align-items:center; gap:8px;
 }
@@ -108,7 +108,7 @@ body.dark-mode .page-credit b{ color: #e5e7eb; }
   content:""; width:8px; height:8px; border-radius:50%;
   background: #94a3b8;                 /* green-500 */
   box-shadow:0 0 0 2px rgba(34,197,94,.18);
-  translate:0 1px;                     /* sejajarkan dengan teks */
+  translate:0 -7px;                     /* sejajarkan dengan teks */
 }
 body.dark-mode .sidebar-credit::before,
 body.dark-mode .page-credit::before{
@@ -124,7 +124,7 @@ body.dark-mode .page-credit::before{
 @media (max-width: 768px){
   .sidebar-credit{
     font-size: 10px;      /* sedikit lebih kecil dari desktop */
-    line-height: 1.05;
+    line-height: 1.5;
     gap: 6px;               /* jarak titik ↔ teks diperkecil */
     padding: 8px 10px;      /* ruang dalam diperkecil biar sejajar border */
     white-space: nowrap;    /* cegah pecah baris */
