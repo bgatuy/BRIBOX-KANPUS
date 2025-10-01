@@ -127,14 +127,13 @@ body.dark-mode .page-credit::before{
     line-height: 1.5;
     gap: 6px;               /* jarak titik ↔ teks diperkecil */
     padding: 8px 10px;      /* ruang dalam diperkecil biar sejajar border */
-    white-space: nowrap;    /* cegah pecah baris */
     overflow: hidden;       /* jaga biar tetap satu baris */
     text-overflow: ellipsis;/* kalau tetap kepanjangan, pakai elipsis */
   }
   .sidebar-credit::before{
     width: 7px;             /* titik sedikit lebih kecil */
     height: 7px;
-    translate: 0 .5px;      /* sejajarkan dengan teks kecil */
+    translate: 0 -7px;      /* sejajarkan dengan teks kecil */
   }
 }
 
