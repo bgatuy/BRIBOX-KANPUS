@@ -192,7 +192,7 @@ document.addEventListener('DOMContentLoaded', function () {
     };
 
     const all = loadReports(); all.push(rec); saveReports(all);
-    showToast('Data tersimpan.');
+    showToast('Data tersimpan');
     form.reset(); bulan.value = month; tanggal.value = defaultDate();
     setLinkTargets(month); refreshCountForMonth(month); computeAutoFields();
   });

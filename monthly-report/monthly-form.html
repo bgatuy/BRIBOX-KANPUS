@@ -14,37 +14,40 @@
   <div class="dashboard">
     <!-- Sidebar -->
     <aside class="sidebar">
-  <h2 class="logo">
-    <img src="../favicon.png" class="logo-icon" alt="Logo" /> BRIBOX KANPUS
-  </h2>
-  <nav>
-    <a href="../index.html">📋 Trackmate</a>
-    <a href="../appsheet.html">📋 AppSheet</a>
-    <a href="../formserahterima.html">📝 Form Serah Terima</a>
+      <h2 class="logo">
+        <img src="../favicon.png" class="logo-icon" alt="Logo" /> BRIBOX KANPUS
+      </h2>
+      <nav>
+        <a href="../index.html">📋 Trackmate</a>
+        <a href="../appsheet.html">📋 AppSheet</a>
+        <a href="../formserahterima.html">📝 Form Serah Terima</a>
 
-    <button class="nav-group" type="button" aria-controls="nav-monthly" aria-expanded="true" onclick="
-      const t=this;const m=document.getElementById('nav-monthly');
-      const ex=t.getAttribute('aria-expanded')==='true';
-      t.setAttribute('aria-expanded', String(!ex)); m.hidden=ex;
-    ">📅 Monthly Report</button>
+        <button class="nav-group" type="button" aria-controls="nav-monthly" aria-expanded="true" onclick="
+          const t=this;const m=document.getElementById('nav-monthly');
+          const ex=t.getAttribute('aria-expanded')==='true';
+          t.setAttribute('aria-expanded', String(!ex)); m.hidden=ex;
+        ">📅 Monthly Report</button>
 
-    <div id="nav-monthly" class="submenu">
-      <a href="monthly-form.html" class="active">Monthly Report Form</a>
-      <a href="monthly-data.html">Monthly Report Data</a>
-    </div>
-  </nav>
-  <div class="sidebar-credit" aria-label="Project credit">
+        <div id="nav-monthly" class="submenu">
+          <a href="monthly-form.html" class="active">Monthly Report Form</a>
+          <a href="monthly-data.html">Monthly Report Data</a>
+        </div>
+      </nav>
+      <div class="sidebar-credit" aria-label="Project credit">
         Web App Created By BangAtuy - 2025
       </div>
-</aside>
-
+    </aside>
 
     <!-- Main wrapper (INI yang bikin layout kembali rapi) -->
     <main class="main">
       <header class="dashboard-header">
-        <button class="sidebar-toggle-btn" onclick="toggleSidebar()">☰</button>
+        <button class="sidebar-toggle-btn" type="button" aria-label="Toggle sidebar" onclick="toggleSidebar()">
+          <span aria-hidden="true">☰</span>
+        </button>
         <h1>Monthly Report Form</h1>
-        <button id="toggleModeBtn" onclick="toggleDarkMode()">🌙</button>
+        <button id="toggleModeBtn" type="button" aria-label="Toggle dark mode" onclick="toggleDarkMode()">
+          <span aria-hidden="true">🌙</span>
+        </button>
       </header>
 
       <!-- ======= KONTEN FORM (struktur ASLI tetap) ======= -->
@@ -56,21 +59,21 @@
           <div class="grid">
             <label class="field">
               <span>Bulan <em>*</em></span>
-              <input type="month" id="bulan" required />
+              <input type="month" id="bulan" name="bulan" required />
             </label>
             <label class="field">
               <span>Tanggal <em>*</em></span>
-              <input type="date" id="tanggal" required />
+              <input type="date" id="tanggal" name="tanggal" required />
             </label>
 
             <label class="field">
               <span>Teknisi <em>*</em></span>
-              <div class="row-inline"><select id="teknisi" required></select></div>
+              <div class="row-inline"><select id="teknisi" name="teknisi" required></select></div>
             </label>
 
             <label class="field">
               <span>Jenis Pekerjaan</span>
-              <select id="jenis">
+              <select id="jenis" name="jenis">
                 <option value="Corrective Maintenance">Corrective Maintenance</option>
                 <option value="Preventive Maintenance">Preventive Maintenance</option>
                 <option value="Pekerjaan Tambahan">Pekerjaan Tambahan</option>
@@ -79,20 +82,20 @@
 
             <label class="field">
               <span>Lokasi — Dari</span>
-              <input id="lokasiDari" placeholder="cth: Kantor Pusat" />
+              <input id="lokasiDari" name="lokasiDari" placeholder="cth: Kantor Pusat" />
             </label>
             <label class="field">
               <span>Lokasi — Ke</span>
-              <input id="lokasiKe" placeholder="cth: Menara BriLian / Div. PLO" />
+              <input id="lokasiKe" name="lokasiKe" placeholder="cth: Menara BriLian / Div. PLO" />
             </label>
 
             <label class="field">
               <span>Detail Pekerjaan</span>
-              <input id="detail" placeholder="cth: Troubleshooting" />
+              <input id="detail" name="detail" placeholder="cth: Troubleshooting" />
             </label>
             <label class="field">
               <span>Status</span>
-              <select id="status">
+              <select id="status" name="status">
                 <option value="Done">Done</option>
                 <option value="Pending">Pending</option>
               </select>
@@ -100,61 +103,63 @@
 
             <label class="field">
               <span>Jam Berangkat</span>
-              <input id="jamBerangkat" type="time" step="60" />
+              <input id="jamBerangkat" name="jamBerangkat" type="time" step="60" />
             </label>
             <label class="field">
               <span>Jam Masuk Laporan (auto)</span>
-              <input id="jamMasuk" type="time" step="60" readonly />
+              <input id="jamMasuk" name="jamMasuk" type="time" step="60" readonly />
             </label>
 
             <label class="field">
               <span>Jam Tiba</span>
-              <input id="jamTiba" type="time" step="60" />
+              <input id="jamTiba" name="jamTiba" type="time" step="60" />
             </label>
             <label class="field">
               <span>Jam Mulai Pekerjaan</span>
-              <input id="jamMulai" type="time" step="60" />
+              <input id="jamMulai" name="jamMulai" type="time" step="60" />
             </label>
 
             <label class="field">
               <span>Jam Selesai</span>
-              <input id="jamSelesai" type="time" step="60" />
+              <input id="jamSelesai" name="jamSelesai" type="time" step="60" />
             </label>
             <label class="field">
               <span>Waktu Penyelesaian (auto)</span>
-              <input id="durasiPenyelesaian" type="text" placeholder="0:00" readonly />
+              <input id="durasiPenyelesaian" name="durasiPenyelesaian" type="text" placeholder="0:00" readonly />
             </label>
 
             <label class="field">
               <span>Jarak Tempuh (km)</span>
-              <input id="jarak" type="number" inputmode="decimal" step="0.1" min="0" placeholder="0" />
+              <input id="jarak" name="jarak" type="number" inputmode="decimal" step="0.1" min="0" placeholder="0" />
             </label>
             <label class="field">
               <span>Waktu Tempuh (auto)</span>
-              <input id="waktuTempuh" type="text" placeholder="0:00" readonly />
+              <input id="waktuTempuh" name="waktuTempuh" type="text" placeholder="0:00" readonly />
             </label>
           </div>
 
           <label class="field full">
             <span>Keterangan</span>
-            <textarea id="keterangan" rows="3" placeholder="Tambahan detail jika perlu..."></textarea>
+            <textarea id="keterangan" name="keterangan" rows="3" placeholder="Tambahan detail jika perlu..."></textarea>
           </label>
 
-         <div class="toolbar">
-  <div class="toolbar-left">
-    <button type="submit" class="btn primary">Simpan</button>
-    <button type="reset" class="btn danger">Reset</button>
-  </div>
-  <div class="toolbar-right">
-    <a id="linkData" class="btn info" href="monthly-data.html">Lihat Data</a>
-  </div>
-</div>
+          <div class="toolbar">
+            <div class="toolbar-left">
+              <button type="submit" class="btn primary">Simpan</button>
+              <button type="reset" class="btn danger">Reset</button>
+            </div>
+            <div class="toolbar-right">
+              <a id="linkData" class="btn info" href="monthly-data.html">Lihat Data</a>
+            </div>
+          </div>
+        </form>
 
-<!-- meta tetap di dalam card ini -->
-<div class="meta-inline">
-  <strong id="countBulan">0</strong>
-  <span>Entri data tersimpan untuk bulan ini</span>
-</div>
+        <!-- meta tetap di dalam card ini, di luar form -->
+        <div class="meta-inline">
+          <strong id="countBulan">0</strong>
+          <span>Entri data tersimpan untuk bulan ini</span>
+        </div>
+      </section>
 
       <div id="toast" class="toast" role="status" aria-live="polite"></div>
     </main>
@@ -178,45 +183,45 @@
     }
 
     (function(){
-    const m=document.getElementById('nav-monthly');
-    const p=document.querySelector('.nav-group[aria-controls="nav-monthly"]');
-    if(!m||!p) return;
-    const hasActive=!!m.querySelector('a.active');
-    p.setAttribute('aria-expanded', hasActive?'true':'false');
-    m.hidden=!hasActive;
-  })();
+      const m=document.getElementById('nav-monthly');
+      const p=document.querySelector('.nav-group[aria-controls="nav-monthly"]');
+      if(!m||!p) return;
+      const hasActive=!!m.querySelector('a.active');
+      p.setAttribute('aria-expanded', hasActive?'true':'false');
+      m.hidden=!hasActive;
+    })();
 
-  document.addEventListener('DOMContentLoaded', () => {
-  if (document.body.dataset.page !== 'monthly') return;
+    document.addEventListener('DOMContentLoaded', () => {
+      if (document.body.dataset.page !== 'monthly') return;
 
-  // cari grid form utama
-  const grid = document.querySelector('body[data-page="monthly"] .grid');
-  if (!grid) return;
+      // cari grid form utama
+      const grid = document.querySelector('body[data-page="monthly"] .grid');
+      if (!grid) return;
 
-  // helper: cari .field berdasarkan teks label (span pertama di dalam .field)
-  const findFieldByLabel = (txt) => {
-    const fields = grid.querySelectorAll('.field');
-    const norm = s => s.replace(/\s+/g,' ').trim().toLowerCase();
-    const want = norm(txt);
-    return Array.from(fields).find(f => {
-      const sp = f.querySelector(':scope > span');
-      return sp && norm(sp.textContent) === want;
+      // helper: cari .field berdasarkan teks label (span pertama di dalam .field)
+      const findFieldByLabel = (txt) => {
+        const fields = grid.querySelectorAll('.field');
+        const norm = s => s.replace(/\s+/g,' ').trim().toLowerCase();
+        const want = norm(txt);
+        return Array.from(fields).find(f => {
+          const sp = f.querySelector(':scope > span');
+          return sp && norm(sp.textContent) === want;
+        });
+      };
+
+      // target yang mau ditukar
+      const fBerangkat = findFieldByLabel('Jam Berangkat');
+      const fLaporan  = findFieldByLabel('Jam Masuk Laporan (auto)');
+
+      if (fBerangkat && fLaporan && fBerangkat !== fLaporan) {
+        // swap posisi node di dalam grid (tanpa clone → event/listener tetap aman)
+        const placeholder = document.createElement('div');
+        grid.insertBefore(placeholder, fBerangkat);
+        grid.replaceChild(fBerangkat, fLaporan);
+        grid.insertBefore(fLaporan, placeholder);
+        grid.removeChild(placeholder);
+      }
     });
-  };
-
-  // target yang mau ditukar
-  const fBerangkat = findFieldByLabel('Jam Berangkat');
-  const fLaporan  = findFieldByLabel('Jam Masuk Laporan (auto)');
-
-  if (fBerangkat && fLaporan && fBerangkat !== fLaporan) {
-    // swap posisi node di dalam grid (tanpa clone → event/listener tetap aman)
-    const placeholder = document.createElement('div');
-    grid.insertBefore(placeholder, fBerangkat);
-    grid.replaceChild(fBerangkat, fLaporan);
-    grid.insertBefore(fLaporan, placeholder);
-    grid.removeChild(placeholder);
-  }
-});
   </script>
   <script src="monthly-form.js"></script>
 </body>
