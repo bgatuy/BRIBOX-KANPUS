@@ -17,30 +17,6 @@ body {
 }
 
 /* =========================
-   DARK MODE
-========================= */
-body.dark-mode { background:#1e1e1e; color:#f0f0f0; }
-body.dark-mode .card { background:#2a2a2a; }
-body.dark-mode input,
-body.dark-mode select,
-body.dark-mode pre,
-body.dark-mode .output-preview {
-  background:#3b3b3b; color:#fff; border-color:#555;
-}
-body.dark-mode .sidebar { background:#141414; }
-body.dark-mode nav a { color:#ccc; }
-body.dark-mode .table th,
-body.dark-mode .table td { background: #2b2b2b; border-color: #555; color: #eee; }
-body.dark-mode .danger { background:#c0392b; }
-body.dark-mode .spinner { border-color:#555; border-top-color:#3498db; }
-/* Controls-bar di Dark Mode */
-body.dark-mode[data-page="serah"] .controls-bar {
-  background:#2a2a2a;
-  border:1px solid #444;
-  box-shadow: 0 2px 6px rgba(0,0,0,.5);
-}
-
-/* =========================
    DASHBOARD LAYOUT
 ========================= */
 .dashboard { display:flex; min-height:100vh; }
@@ -63,7 +39,6 @@ nav { display:flex; flex-direction:column; gap:0.8rem; }
   font-size: 1em;   /* ikut container */
 }
 
-
 .main { flex:1; padding:2rem; }
 .dashboard-header {
   display:flex; justify-content:space-between; align-items:center;
@@ -73,11 +48,21 @@ nav { display:flex; flex-direction:column; gap:0.8rem; }
   display:none; background:none; border:none; font-size:1.6rem;
   cursor:pointer; margin-right:1rem; color:#111;
 }
+.dashboard-header { 
+  min-height: 40px;           /* pastikan ruang vertikal cukup */
+  position: relative;         /* anchor untuk child absolute (sudah ada di CSS kamu) */
+}
+
 .dashboard-header .page-title,
 .dashboard-header h1,
 .dashboard-header h3 {
-  position:absolute; left:50%; transform:translateX(-50%);
-  margin:0; text-align:center; pointer-events:none;
+  position: absolute;
+  left: 50%;
+  top: 50%;                   /* turun ke tengah */
+  transform: translate(-50%, -50%);  /* center X & Y */
+  margin: 0;
+  text-align: center;
+  pointer-events: none;
 }
 
 body[data-page="serah"] .controls-bar {
@@ -97,10 +82,6 @@ body[data-page="serah"] .controls-bar {
 }
 .sidebar-credit b,
 .page-credit b{ color: #94a3b8; }       /* slate-900 */
-body.dark-mode .sidebar-credit,
-body.dark-mode .page-credit{ color: #cbd5e1; }   /* slate-300 */
-body.dark-mode .sidebar-credit b,
-body.dark-mode .page-credit b{ color: #e5e7eb; }
 
 /* titik bulet di depan */
 .sidebar-credit::before,
@@ -109,10 +90,6 @@ body.dark-mode .page-credit b{ color: #e5e7eb; }
   background: #94a3b8;                 /* green-500 */
   box-shadow:0 0 0 2px rgba(34,197,94,.18);
   translate:0 -7px;                     /* sejajarkan dengan teks */
-}
-body.dark-mode .sidebar-credit::before,
-body.dark-mode .page-credit::before{
-  background: #e5e7eb; box-shadow:0 0 0 2px rgba(52,211,153,.18);
 }
 
 /* posisi khusus versi header */
@@ -147,11 +124,8 @@ body.dark-mode .page-credit::before{
   .sidebar-credit::before{ width: 6.5px; height: 6.5px; }
 }
 
-
 /* versi sidebar: nempel bawah */
 .sidebar-credit{ margin-top:auto; padding:10px 12px; border-top:1px solid rgba(255,255,255,.06); }
-
-
 
 /* =========================
    CARDS & FORMS
@@ -167,7 +141,7 @@ body.dark-mode .page-credit::before{
 }
 .form-group select,
 .form-group input[type="date"] {
-  max-width:180px; width:100%; font-size:13px;
+  max-width:150px; width:100%; font-size:12px;
   text-align:left; text-align-last:center;
 }
 label { font-weight:600; }
@@ -245,13 +219,6 @@ body[data-page="appsheet"] .btn-copy {
 }
 #btnGenFilesOnly:hover{ background: #d97706; }
 
-/* Dark mode tweak */
-body.dark-mode #btnGenCMOnly{ background: #0284c7; color: #eaf6ff; }
-body.dark-mode #btnGenCMOnly:hover{ background: #0369a1; }
-body.dark-mode #btnGenFilesOnly{ background: #f59e0b; color: #eaf6ff; }
-body.dark-mode #btnGenFilesOnly:hover{ background: #d97706; }
-
-
 /* =========================
    INTERACTIONS
 ========================= */
@@ -318,13 +285,6 @@ body[data-page="serah"] .table tbody tr:nth-child(even){ background:var(--serah-
 @media (hover:hover) and (pointer:fine){
   body[data-page="serah"] .table tbody tr:hover{ background:var(--serah-row-hover); }
 }
-
-/* Dark mode tweak */
-body.dark-mode[data-page="serah"] .table thead th { background: #2563EB; color: #e5e7eb; border-color: #1f2937; }
-body.dark-mode[data-page="serah"] .table th.aksi,
-body.dark-mode[data-page="serah"] .table th.col-aksi { background: #3b0a0a; color: #fdecec; }
-body.dark-mode[data-page="serah"] .table td.aksi { background:#1f2937; box-shadow:-1px 0 0 #374151 inset; }
-body.dark-mode[data-page="serah"] .table tbody tr:nth-child(even){ background: #111827; }
 
 /* ===== SERAH: layout 2 kolom rapi + tombol di bawah ===== */
 body[data-page="serah"] .controls-bar{
@@ -506,13 +466,43 @@ body[data-page="serah"] .controls-bar{
   .card .upload-label, .card .btn-upload { max-width:150px; width:100%; }
   .card button { width:100%; max-width:150px; }
   .btn-row { justify-content:center; gap:12px; margin-top:20px; flex-wrap:wrap; }
-  .dashboard-header .page-title,
-  .dashboard-header h1,
-  .dashboard-header h3 {
-    position:static; transform:none; margin:0 auto; text-align:center;
-    pointer-events:auto; font-size:1.6rem; flex:1; justify-content:center;
-    display:flex; align-items:center; gap:8px;
-  }
+  /* Header grid: kiri | filler | kanan */
+.dashboard-header{
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: center;
+  gap: 12px;
+  min-height: 50px;
+  position: relative;
+}
+
+/* Judul membentang semua kolom → center beneran */
+.dashboard-header .page-title,
+.dashboard-header h1,
+.dashboard-header h3{
+  grid-column: 1 / -1;       /* <— kuncinya */
+  justify-self: center;       /* center horizontal */
+  margin: 0;
+  text-align: center;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  pointer-events: none;       /* biar elemen di kiri/kanan tetap bisa diklik */
+  z-index: 1;                 /* di bawah tombol kiri/kanan */
+}
+
+/* Kiri & kanan tetap di kolomnya, di atas judul */
+.sidebar-toggle-btn{
+  grid-column: 1;
+  justify-self: start;
+  z-index: 2;
+}
+.dashboard-header .page-credit,
+.dashboard-header .right-slot{
+  grid-column: 3;
+  justify-self: end;
+  z-index: 2;
+}
 }
 
 @media (hover:none), (pointer:coarse){
@@ -610,4 +600,3 @@ body[data-page="serah"] .controls-bar{
     text-align: center;
   }
 }
-

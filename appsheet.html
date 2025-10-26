@@ -44,7 +44,6 @@
       <header class="dashboard-header">
         <button class="sidebar-toggle-btn" onclick="toggleSidebar()">☰</button>
         <h1><span class="material-icons">description</span> AppSheet</h1>
-        <button id="toggleModeBtn" onclick="toggleDarkMode()">🌙</button>
       </header>
 
       <section class="card">
@@ -143,29 +142,13 @@
   </div>
   
   <script>
-    if (localStorage.getItem('darkMode') === 'true') {
-      document.body.classList.add('dark-mode');
-    }
-    document.addEventListener('DOMContentLoaded', () => {
-      const toggleBtn = document.getElementById('toggleModeBtn');
-      if (toggleBtn) {
-        toggleBtn.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
-      }
-    });
-    function toggleDarkMode() {
-      const isDark = document.body.classList.toggle('dark-mode');
-      localStorage.setItem('darkMode', isDark);
-      document.getElementById('toggleModeBtn').textContent = isDark ? '☀️' : '🌙';
-    }
     function toggleSidebar() {
-      document.querySelector('.sidebar').classList.toggle('hidden');
-    }
+      document.querySelector('.sidebar').classList.toggle('hidden');}
   </script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
   <script>
     if (window.pdfjsLib && (!pdfjsLib.GlobalWorkerOptions.workerSrc || pdfjsLib.GlobalWorkerOptions.workerSrc === '')) {
-      pdfjsLib.GlobalWorkerOptions.workerSrc ='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';
-  }
+      pdfjsLib.GlobalWorkerOptions.workerSrc ='https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js';}
   </script>
   <script src="appsheet.js"></script>
 </body>

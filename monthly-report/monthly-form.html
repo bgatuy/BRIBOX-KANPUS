@@ -45,9 +45,6 @@
           <span aria-hidden="true">☰</span>
         </button>
         <h1>Monthly Report Form</h1>
-        <button id="toggleModeBtn" type="button" aria-label="Toggle dark mode" onclick="toggleDarkMode()">
-          <span aria-hidden="true">🌙</span>
-        </button>
       </header>
 
       <!-- ======= KONTEN FORM (struktur ASLI tetap) ======= -->
@@ -166,16 +163,6 @@
   </div>
 
   <script>
-    if (localStorage.getItem('darkMode') === 'true') document.body.classList.add('dark-mode');
-    document.addEventListener('DOMContentLoaded', () => {
-      const b = document.getElementById('toggleModeBtn');
-      if (b) b.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
-    });
-    function toggleDarkMode(){
-      const on = document.body.classList.toggle('dark-mode');
-      localStorage.setItem('darkMode', on);
-      const b = document.getElementById('toggleModeBtn'); if (b) b.textContent = on ? '☀️' : '🌙';
-    }
     function toggleSidebar(){
       const sb = document.querySelector('.sidebar');
       const isMobile = window.matchMedia('(max-width:768px)').matches;

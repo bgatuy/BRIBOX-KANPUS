@@ -48,7 +48,6 @@
       <header class="dashboard-header">
         <button class="sidebar-toggle-btn" onclick="toggleSidebar()">☰</button>
         <h1><span class="material-icons">receipt_long</span> Form Serah Terima</h1>
-        <button id="toggleModeBtn" onclick="toggleDarkMode()">🌙</button>
       </header>
 
       <div class="controls-bar">
@@ -131,28 +130,8 @@
   </div>
 
   <script>
-    // Aktifkan darkmode otomatis jika sebelumnya sudah diaktifkan
-    if (localStorage.getItem('darkMode') === 'true') {
-      document.body.classList.add('dark-mode');
-    }
-
-    // Perbarui ikon tombol sesuai status
-    document.addEventListener('DOMContentLoaded', () => {
-      const toggleBtn = document.getElementById('toggleModeBtn');
-      if (toggleBtn) {
-        toggleBtn.textContent = document.body.classList.contains('dark-mode') ? '☀️' : '🌙';
-      }
-    });
-
-    function toggleDarkMode() {
-      const isDark = document.body.classList.toggle('dark-mode');
-      localStorage.setItem('darkMode', isDark);
-      document.getElementById('toggleModeBtn').textContent = isDark ? '☀️' : '🌙';
-    }
-
     function toggleSidebar() {
-      document.querySelector('.sidebar').classList.toggle('hidden');
-    }
+      document.querySelector('.sidebar').classList.toggle('hidden');}
   </script>
 
   <!-- jsPDF + AutoTable + pdf-lib -->
