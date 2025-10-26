@@ -483,6 +483,7 @@ body[data-page="serah"] .controls-bar{
   grid-column: 1 / -1;       /* <— kuncinya */
   justify-self: center;       /* center horizontal */
   margin: 0;
+  font-size: 16px;
   text-align: center;
   display: flex;
   align-items: center;
