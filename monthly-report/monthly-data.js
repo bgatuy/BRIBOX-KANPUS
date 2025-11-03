@@ -128,11 +128,16 @@
         <td class="num">${r.jarakKm||0}</td>
         <td>${esc(r.waktuTempuhStr||"0:00")}</td>
         <td>${esc(r.keterangan||"")}</td>
-        <td><button class="btn-del" data-id="${r.id}">Hapus</button></td>
+        <td class="aksi">
+          <div class="btn-group">
+            <a href="monthly-form.html?edit=${r.id}" class="btn-edit" title="Edit">Edit</a>
+            <button class="btn-monthly-del" data-id="${r.id}">Hapus</button>
+          </div>
+        </td>
       </tr>`).join("");
 
     // klik tombol hapus
-    tbody.querySelectorAll(".btn-del").forEach(btn=>{
+    tbody.querySelectorAll(".btn-monthly-del").forEach(btn=>{
       btn.addEventListener("click", ()=>{
         const id = btn.getAttribute("data-id");
         if(!id) return;

@@ -55,6 +55,7 @@ document.addEventListener('DOMContentLoaded', function () {
   const btnLihatBulan = document.getElementById('btnLihatBulan');
   const countBulan = document.getElementById('countBulan');
   const toast = document.getElementById('toast');
+  const pageTitle = document.querySelector('.page-subtitle');
 
   // ===== utils
   const today = new Date();
@@ -127,6 +128,32 @@ document.addEventListener('DOMContentLoaded', function () {
     } else { durasiPenyelesaian.value = '0:00'; }
   }
 
+  // ===== FUNGSI EDIT =====
+  const params = new URLSearchParams(window.location.search);
+  const editId = params.get('edit');
+
+  function populateFormForEdit(id) {
+    const reports = loadReports();
+    const entry = reports.find(r => r.id === id);
+
+    if (!entry) {
+      showToast('Data untuk diedit tidak ditemukan.');
+      return;
+    }
+
+    // Isi semua field form
+    for (const key in entry) {
+      const field = el(key);
+      if (field) {
+        field.value = entry[key];
+      }
+    }
+
+    if (pageTitle) pageTitle.textContent = 'Edit SPJ Harian';
+    const submitBtn = form.querySelector('button[type="submit"]');
+    if (submitBtn) submitBtn.textContent = 'Update';
+  }
+
   // ===== init
   bulan.value = defaultMonth();
   tanggal.value = defaultDate();
@@ -139,6 +166,12 @@ document.addEventListener('DOMContentLoaded', function () {
     ['input','change'].forEach(ev => inp.addEventListener(ev, computeAutoFields));
   });
   computeAutoFields();
+
+  // Jika mode edit, panggil fungsi untuk mengisi form
+  if (editId) {
+    populateFormForEdit(editId);
+    refreshCountForMonth(bulan.value); // Update count juga
+  }
 
   bulan.addEventListener('change', ()=>{ setLinkTargets(bulan.value); refreshCountForMonth(bulan.value); });
 
@@ -156,44 +189,63 @@ document.addEventListener('DOMContentLoaded', function () {
     const tech = teknisi.value?.trim();
     if(!month || !dateStr || !tech){ showToast('Bulan, Tanggal, dan Teknisi wajib diisi.'); return; }
 
-    computeAutoFields(); // ensure latest
+    computeAutoFields(); // Hitung ulang field otomatis
 
-    const berangkat = parseTimeToMin(jamBerangkat.value) ?? 0;
-    const tiba = parseTimeToMin(jamTiba.value) ?? 0;
-    const mulai = parseTimeToMin(jamMulai.value) ?? 0;
-    const selesai = parseTimeToMin(jamSelesai.value) ?? 0;
-    const durPenyMin = Math.max(0, (selesai - mulai + 1440) % 1440);
-    const tempuhMin = Math.max(0, (tiba - berangkat + 1440) % 1440);
+    // Jika mode edit, update data. Jika tidak, buat baru.
+    if (editId) {
+      const allReports = loadReports();
+      const entryIndex = allReports.findIndex(r => r.id === editId);
 
-    const rec = {
-      id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2),
-      month,
-      date: dateStr,
-      tanggalLabel: formatTanggalLong(dateStr),
-      teknisi: tech,
-      lokasiDari: (lokasiDari.value||'').trim(),
-      lokasiKe: (lokasiKe.value||'').trim(),
-      jenis: jenis.value,
-      detail: (detail.value||'').trim(),
-      status: status.value,
-      jamMasuk: jamMasuk.value || '',
-      jamBerangkat: jamBerangkat.value || '',
-      jamTiba: jamTiba.value || '',
-      jamMulai: jamMulai.value || '',
-      jamSelesai: jamSelesai.value || '',
-      durasiPenyelesaianMin: durPenyMin,
-      durasiPenyelesaianStr: toHHMM(durPenyMin),
-      jarakKm: parseFloat(jarak.value || '0') || 0,
-      waktuTempuhMin: tempuhMin,
-      waktuTempuhStr: toHHMM(tempuhMin),
-      keterangan: (keterangan.value||'').trim(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString()
-    };
-
-    const all = loadReports(); all.push(rec); saveReports(all);
-    showToast('Data tersimpan');
-    form.reset(); bulan.value = month; tanggal.value = defaultDate();
-    setLinkTargets(month); refreshCountForMonth(month); computeAutoFields();
+      if (entryIndex > -1) {
+        const existingEntry = allReports[entryIndex];
+        // Update field dari form, pertahankan ID dan createdAt
+        const updatedEntry = {
+          ...existingEntry,
+          month,
+          date: dateStr,
+          tanggalLabel: formatTanggalLong(dateStr),
+          teknisi: tech,
+          lokasiDari: (lokasiDari.value||'').trim(),
+          lokasiKe: (lokasiKe.value||'').trim(),
+          jenis: jenis.value,
+          detail: (detail.value||'').trim(),
+          status: status.value,
+          jamMasuk: jamMasuk.value || '',
+          jamBerangkat: jamBerangkat.value || '',
+          jamTiba: jamTiba.value || '',
+          jamMulai: jamMulai.value || '',
+          jamSelesai: jamSelesai.value || '',
+          durasiPenyelesaianMin: Math.max(0, (parseTimeToMin(jamSelesai.value) - parseTimeToMin(jamMulai.value) + 1440) % 1440),
+          durasiPenyelesaianStr: durasiPenyelesaian.value,
+          jarakKm: parseFloat(jarak.value || '0') || 0,
+          waktuTempuhMin: Math.max(0, (parseTimeToMin(jamTiba.value) - parseTimeToMin(jamBerangkat.value) + 1440) % 1440),
+          waktuTempuhStr: waktuTempuh.value,
+          keterangan: (keterangan.value||'').trim(),
+          updatedAt: new Date().toISOString()
+        };
+        allReports[entryIndex] = updatedEntry;
+        saveReports(allReports);
+        showToast('Data berhasil diupdate!');
+        setTimeout(() => { window.location.href = 'monthly-data.html'; }, 1000);
+      } else {
+        showToast('Gagal update, data tidak ditemukan.');
+      }
+    } else {
+      // Logika membuat data baru (seperti sebelumnya)
+      const rec = {
+        id: crypto.randomUUID ? crypto.randomUUID() : String(Date.now()) + Math.random().toString(16).slice(2),
+        month, date: dateStr, tanggalLabel: formatTanggalLong(dateStr), teknisi: tech,
+        lokasiDari: (lokasiDari.value||'').trim(), lokasiKe: (lokasiKe.value||'').trim(), jenis: jenis.value,
+        detail: (detail.value||'').trim(), status: status.value, jamMasuk: jamMasuk.value || '',
+        jamBerangkat: jamBerangkat.value || '', jamTiba: jamTiba.value || '', jamMulai: jamMulai.value || '', jamSelesai: jamSelesai.value || '',
+        durasiPenyelesaianMin: Math.max(0, (parseTimeToMin(jamSelesai.value) - parseTimeToMin(jamMulai.value) + 1440) % 1440), durasiPenyelesaianStr: durasiPenyelesaian.value,
+        jarakKm: parseFloat(jarak.value || '0') || 0, waktuTempuhMin: Math.max(0, (parseTimeToMin(jamTiba.value) - parseTimeToMin(jamBerangkat.value) + 1440) % 1440), waktuTempuhStr: waktuTempuh.value,
+        keterangan: (keterangan.value||'').trim(), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString()
+      };
+      const all = loadReports(); all.push(rec); saveReports(all);
+      showToast('Data tersimpan');
+      form.reset(); bulan.value = month; tanggal.value = defaultDate();
+      setLinkTargets(month); refreshCountForMonth(month); computeAutoFields();
+    }
   });
 })();

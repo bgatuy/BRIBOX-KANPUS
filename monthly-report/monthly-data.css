@@ -110,6 +110,66 @@ body[data-page="monthly"] .table tbody td{
 }
 body[data-page="monthly"] .table td.col-teknisi{ text-align:left !important; }
 
+/* === FREEZE KOLOM AKSI (KANAN) === */
+body[data-page="monthly"] .table th.col-aksi,
+body[data-page="monthly"] .table td:last-child {
+  position: sticky;
+  right: 0;
+  z-index: 3; /* Selevel dengan header baris 1 */
+}
+/* Pastikan header kolom Aksi punya z-index tertinggi agar di atas segalanya */
+body[data-page="monthly"] .table thead tr.h1 th.col-aksi {
+  z-index: 5;
+}
+body[data-page="monthly"] .table td:last-child {
+  background: #fff; /* Warna solid agar tidak transparan */
+}
+
+/* Styling untuk tombol di kolom Aksi */
+body[data-page="monthly"] .table td.aksi .btn-group {
+  display: flex;
+  gap: 8px;
+  align-items: center; /* Pastikan tombol sejajar vertikal */
+  justify-content: center;
+}
+
+/* Menyamakan ukuran tombol Edit dan Hapus, dan memastikan style ini HANYA untuk halaman monthly */
+body[data-page="monthly"] .table td.aksi .btn-edit,
+body[data-page="monthly"] .table td.aksi .btn-monthly-del {
+  display: inline-flex; /* Kunci agar <a> dan <button> berukuran sama */
+  align-items: center;
+  justify-content: center;
+  padding: 10px 14px;
+  box-sizing: border-box; /* Pastikan padding dihitung sama */
+  font-family: inherit;   /* Paksa <button> pakai font yang sama */
+  line-height: 1; /* Menyamakan tinggi baris */
+  margin: 0;
+  border-radius: 8px;
+  font-size: 12px;
+  font-weight: 600;
+  border: none;
+  cursor: pointer;
+  text-decoration: none;
+}
+
+body[data-page="monthly"] .table td.aksi .btn-edit { background-color: #2563eb; color: #fff; }
+body[data-page="monthly"] .table td.aksi .btn-monthly-del {
+  background-color: #ef4444; color: #fff;
+}
+
+/* Garis pemisah antara tombol Edit dan Hapus */
+body[data-page="monthly"] .table td.aksi .btn-group .btn-monthly-del {
+  position: relative;
+}
+body[data-page="monthly"] .table td.aksi .btn-group .btn-monthly-del::before {
+  content: '';
+  position: absolute;
+  left: -4px; /* Posisikan di tengah gap */
+  height: 170%;
+  width: 1px;
+  background-color: #444;
+}
+
 /* Spasi antar card */
 body[data-page="monthly"] .card + .card{ margin-top:18px; }
 body[data-page="monthly"] .card{ padding-bottom:18px; }
@@ -183,19 +243,6 @@ body[data-page="monthly"] .card{ padding-bottom:18px; }
 @media (max-width:360px){
 body[data-page="monthly"] .controls-right .btn.info{ width:100%; }
 }
-
-/* Tombol hapus seragam dengan style form serah terima */
-.btn-del {
-  background-color:#ef4444;  /* merah bootstrap */
-  color:#fff;
-  border:none;
-  padding:8px 12px;
-  border-radius:8px;
-  font-size:12px;
-  cursor:pointer;
-  transition:background-color .2s ease;
-}
-.btn-del:hover { background-color:#c9302c; }
 
 /* Guard layout utama */
 body[data-page="monthly"] .dashboard .main{ min-width:0; }
