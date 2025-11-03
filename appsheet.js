@@ -306,41 +306,49 @@ pdfInput?.addEventListener("change", async () => {
 
 /* ========= Copy & Save ========= */
 copyBtn?.addEventListener("click", async () => {
-  const textarea = document.createElement("textarea");
-  textarea.value = output.textContent;
-  document.body.appendChild(textarea);
-  textarea.select();
-  document.execCommand("copy");
-  document.body.removeChild(textarea);
-  copyBtn.textContent = "✔ Copied!";
-  setTimeout(() => (copyBtn.textContent = "Copy"), 1500);
+// 1) Copy teks ke clipboard (seperti sebelumnya)
+const textarea = document.createElement("textarea");
+textarea.value = output.textContent || "";
+document.body.appendChild(textarea);
+textarea.select();
+document.execCommand("copy");
+document.body.removeChild(textarea);
+copyBtn.textContent = "Copied!";
+setTimeout(() => (copyBtn.textContent = "Copy"), 1500);
 
-  if (!currentFile || !currentTanggalRaw) return;
+// 2) Validasi state
+if (!currentFile || !currentTanggalRaw) {
+showToast("Tidak ada file/tanggal untuk disimpan.", 3000);
+return;
+}
 
-  // === HASH BARU ===
-  const contentHash = await sha256File(currentFile);
+// 3) Hitung hash
+const contentHash = await sha256File(currentFile);
 
-  const namaUkerBersih = stripLeadingColon(unitKerja) || '-';
-  const histori = JSON.parse(localStorage.getItem("pdfHistori")) || [];
+// 4) Simpan blob ke IndexedDB terlebih dahulu (repair kalau hilang)
+try {
+await savePdfToIndexedDB(currentFile, undefined, { contentHash });
+} catch (e) {
+showToast("Gagal simpan PDF ke perangkat: " + (e?.message || e), 4000);
+return;
+}
 
-  // DEDUPE BERDASARKAN HASH (file identik saja yang diblokir)
-  const isIdentik = histori.some(x => x.contentHash === contentHash);
+// 5) Baru update histori (dedupe hanya untuk localStorage)
+const namaUkerBersih = stripLeadingColon(unitKerja) || "-";
+const histori = JSON.parse(localStorage.getItem("pdfHistori") || "[]");
 
-  if (!isIdentik) {
-    const rec = {
-      namaUker: namaUkerBersih,
-      tanggalPekerjaan: currentTanggalRaw,
-      fileName: currentFile.name,
-      contentHash,                          // identitas isi
-      size: currentFile.size,
-      uploadedAt: new Date().toISOString()
-    };
-    histori.push(rec);
-    localStorage.setItem("pdfHistori", JSON.stringify(histori));
+if (!histori.some(x => x.contentHash === contentHash)) {
+const rec = {
+namaUker: namaUkerBersih,
+tanggalPekerjaan: currentTanggalRaw,
+fileName: currentFile.name,
+contentHash,
+size: currentFile.size,
+uploadedAt: new Date().toISOString()
+};
+histori.push(rec);
+localStorage.setItem("pdfHistori", JSON.stringify(histori));
+}
 
-    await savePdfToIndexedDB(currentFile, undefined, { contentHash }); // simpan blob + hash
-    showToast(`✔ berhasil disimpan ke histori.`);
-  } else {
-    showToast(`ℹ sudah ada di histori.`);
-  }
+showToast("Berhasil disimpan/di-repair di perangkat.");
 });

@@ -480,6 +480,28 @@ function getSelectedFromTable(){
   }));
 }
 
+async function checkMissingSelection(selected){
+  const all = await getAllPdfBuffersFromIndexedDB([]);
+  const byHash = new Set(all.map(x=>x.contentHash).filter(Boolean));
+  const byName = new Set(all.map(x=>x.name).filter(Boolean));
+  const missing = [];
+  for (const s of selected){
+    const ok = (s.hash && byHash.has(s.hash)) || (s.name && byName.has(s.name));
+    if (!ok) missing.push(s);
+  }
+  return missing;
+}
+function markMissingRows(missing){
+  const setH = new Set(missing.map(m=>m.hash).filter(Boolean));
+  const setN = new Set(missing.map(m=>m.name).filter(Boolean));
+  document.querySelectorAll('#historiBody tr[data-name], #historiBody tr[data-hash]')
+    .forEach(tr=>{
+      const h = tr.getAttribute('data-hash')||'';
+      const n = tr.getAttribute('data-name')||'';
+      tr.classList.toggle('missing', (h && setH.has(h)) || (n && setN.has(n)));
+    });
+}
+
 // Sinkron master checkbox
 function syncPickAllState(){
   if (!pickAll) return;
@@ -770,20 +792,44 @@ window.addEventListener('storage', (e)=>{ if(e.key==='pdfHistori') renderTabel()
 // ========== TOMBOL LAMA: generate gabungan (semua) ==========
 btnGenerate?.addEventListener('click', async ()=>{
   const tanggalInput = inputTanggalSerah.value;
-  if(!tanggalInput){ alert('⚠️ Silakan isi tanggal serah terima terlebih dahulu.'); return; }
+  if(!tanggalInput){ alert('Silakan isi tanggal serah terima terlebih dahulu.'); return; }
+
+  const selected = getSelectedFromTable(); // semua jika tidak ada yang dicentang
+  const missing = await checkMissingSelection(selected);
+  if (missing.length){
+    markMissingRows(missing);
+    const list = missing.slice(0,10).map(m=>m.name||m.hash).join('\n');
+    if(!confirm(`Ada ${missing.length} file tidak ditemukan, silahkan upload ulang file ini:\n${list}${missing.length>10?'\n...':''}\n\nLanjut generate tanpa file ini?`)){
+      hideSpinner?.(); return;
+    }
+  }
+
   try{ showSpinner(); await generatePdfSerahTerima(); }
   catch(err){ console.error(err); alert('Gagal generate PDF. Pastikan jsPDF, AutoTable, PDF-lib & PDF.js sudah dimuat.'); }
   finally{ hideSpinner(); }
 });
 
+
 // ========== TOMBOL BARU (jika ada di HTML) ==========
 btnGenCombo?.addEventListener('click', async ()=>{
   const tanggalInput = inputTanggalSerah?.value || '';
   if(!tanggalInput){ alert('Isi Tanggal Serah Terima dulu.'); return; }
+
+  const selected = getSelectedFromTable();
+  const missing = await checkMissingSelection(selected);
+  if (missing.length){
+    markMissingRows(missing);
+    const list = missing.slice(0,10).map(m=>m.name||m.hash).join('\n');
+    if(!confirm(`Ada ${missing.length} file tidak ditemukan, silahkan upload ulang file ini:\n${list}${missing.length>10?'\n...':''}\n\nLanjut generate tanpa file ini?`)){
+      hideSpinner?.(); return;
+    }
+  }
+
   try{ showSpinner(); await generateCombinedSelected(); }
   catch(err){ console.error(err); alert('Gagal membuat PDF gabungan.'); }
   finally{ hideSpinner(); }
 });
+
 
 btnGenCMOnly?.addEventListener('click', async ()=>{
   const tanggalInput = inputTanggalSerah?.value || '';
@@ -794,19 +840,29 @@ btnGenCMOnly?.addEventListener('click', async ()=>{
 });
 
 btnGenFilesOnly?.addEventListener('click', async ()=>{
-  // ambil baris yang tercentang SAJA
   const selected = Array.from(document.querySelectorAll('#historiBody tr[data-name], #historiBody tr[data-hash]'))
     .filter(tr => tr.querySelector('input.pick')?.checked)
     .map(tr => ({ hash: tr.getAttribute('data-hash') || '', name: tr.getAttribute('data-name') || '' }));
 
   if (selected.length === 0) {
-  alert('Pilih minimal satu file dulu (ceklist di kolom paling kiri).');
-  return;}
+    alert('Pilih minimal satu file dulu (ceklist di kolom paling kiri).');
+    return;
+  }
+
+  const missing = await checkMissingSelection(selected);
+  if (missing.length){
+    markMissingRows(missing);
+    const list = missing.slice(0,10).map(m=>m.name||m.hash).join('\n');
+    if(!confirm(`Ada ${missing.length} file tidak ditemukan, silahkan upload ulang file ini:\n${list}${missing.length>10?'\n...':''}\n\nLanjut generate tanpa file ini?`)){
+      hideSpinner?.(); return;
+    }
+  }
 
   try{ showSpinner(); await generateOriginalsOnly(selected); }
   catch(err){ console.error(err); alert('Gagal menggabungkan PDF asli.'); }
   finally{ hideSpinner(); }
 });
+
 
 document.addEventListener('DOMContentLoaded', ()=>{ renderTabel(); loadNama(); });
 
@@ -823,3 +879,42 @@ async function debugListPDF(){
   }))); };
 }
 window.debugListPDF = debugListPDF;
+
+async function dedupePdfsKeepLatest(){
+  const db = await openDb();
+  const seen = new Map();
+  const toDelete = [];
+  await new Promise((resolve)=>{
+    const tx = db.transaction(['pdfs'],'readonly');
+    const st = tx.objectStore('pdfs');
+    const cur = st.openCursor();
+    cur.onsuccess = (e)=>{
+      const c = e.target.result;
+      if(!c){ resolve(); return; }
+      const v = c.value || {};
+      const key = v.contentHash || v.name || ('id:'+c.key);
+      const ts = Date.parse(v.uploadedAt || v.dateAdded || 0) || c.key;
+      const prev = seen.get(key);
+      if(!prev || ts > prev.ts){
+        if(prev) toDelete.push(prev.key);
+        seen.set(key, { key: c.key, ts });
+      } else {
+        toDelete.push(c.key);
+      }
+      c.continue();
+    };
+    cur.onerror = ()=> resolve();
+  });
+  await new Promise((resolve)=>{
+    if(!toDelete.length) return resolve();
+    const tx = db.transaction(['pdfs'],'readwrite');
+    const st = tx.objectStore('pdfs');
+    let left = toDelete.length;
+    toDelete.forEach(k=>{
+      const d = st.delete(k);
+      d.onsuccess = d.onerror = ()=>{ if(--left===0) resolve(); };
+    });
+  });
+  console.log('Deleted duplicates:', toDelete.length);
+}
+window.dedupePdfsKeepLatest = dedupePdfsKeepLatest;

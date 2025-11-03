@@ -192,27 +192,38 @@ async function saveBlobByHash(fileOrBlob, contentHash) {
   if (!blob.size) throw new Error("PDF kosong");
   if (!contentHash) throw new Error("contentHash wajib");
 
-  const database = await ensureDb();
+  // hitung meta posisi (x,y) untuk TTD
+  let meta = null;
+  try {
+    const buf = await blob.arrayBuffer();
+    if (typeof autoCalibratePdf === "function") {
+      meta = await autoCalibratePdf(buf); // { x,y,linesUK,linesSOL,dx,dy,v }
+    }
+  } catch (e) {
+    console.warn("autoCalibrate gagal:", e);
+  }
+
+  const database = await ensureDb(); // atau openDb() sesuai yang ada di filemu
   if (!database) throw new Error("IndexedDB tidak tersedia / gagal dibuka");
 
   return new Promise((resolve, reject) => {
-    const tx = database.transaction([STORE_BLOBS], "readwrite");
-    const store = tx.objectStore(STORE_BLOBS);
-
+    const tx = database.transaction(["pdfBlobs"], "readwrite");
+    const store = tx.objectStore("pdfBlobs");
     const value = {
       contentHash,
       name: (/** @type {File} */(fileOrBlob)).name || "document.pdf",
       size: blob.size,
       dateAdded: new Date().toISOString(),
-      data: blob
+      data: blob,
+      meta            // simpan meta di sini
     };
-
-    const req = store.put(value);        // put = overwrite (tanpa double)
+    const req = store.put(value); // put = overwrite, tidak dobel
     tx.oncomplete = () => resolve();
     tx.onerror    = () => reject(tx.error || new Error("Tx error"));
     req.onerror   = () => reject(req.error || new Error("Req error"));
   });
 }
+
 
 /** === LAMA (dipertahankan untuk kompatibilitas) ===
  * Simpan ke store lama `pdfs` + titip contentHash & meta.
@@ -416,38 +427,45 @@ Status : ${status}`;
 /* ========= Copy & Save Histori (single final toast) ========= */
 copyBtn?.addEventListener("click", async () => {
   try {
-    // 0) Copy teks ke clipboard (pakai API modern + fallback)
-const text = (typeof output !== "undefined" && output?.textContent) ? output.textContent : "";
-try {
-  if (navigator.clipboard?.writeText) {
-    await navigator.clipboard.writeText(text);
-  } else {
-    const ta = document.createElement("textarea");
-    ta.value = text;
-    document.body.appendChild(ta);
-    ta.select();
-    document.execCommand("copy");
-    document.body.removeChild(ta);
-  }
-} catch (_) {
-  // diamkan; nanti toast tetap muncul
-}
-if (copyBtn) {
-  copyBtn.textContent = "✔ Copied!";
-  setTimeout(() => (copyBtn.textContent = "Copy"), 1500);
-}
-
+    // 0) Copy teks ke clipboard (modern API + fallback)
+    const text = (typeof output !== "undefined" && output?.textContent) ? output.textContent : "";
+    try {
+      if (navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(text);
+      } else {
+        const ta = document.createElement("textarea");
+        ta.value = text;
+        document.body.appendChild(ta);
+        ta.select();
+        document.execCommand("copy");
+        document.body.removeChild(ta);
+      }
+    } catch (_) {}
+    if (copyBtn) {
+      copyBtn.textContent = "Copied!";
+      setTimeout(() => (copyBtn.textContent = "Copy"), 1500);
+    }
 
     // 1) Validasi file
     const file = fileInput?.files?.[0];
-    if (!file) { showToast("⚠ Tidak ada file PDF yang dipilih.", 3500, "warn"); return; }
+    if (!file) { showToast("Tidak ada file PDF yang dipilih.", 3500, "warn"); return; }
 
-    // 2) Hash (pakai fallback jika hashing error)
+    // 2) Hash isi (dengan fallback)
     let contentHash;
     try { contentHash = await sha256File(file); }
     catch { contentHash = `fz_${file.size}_${file.lastModified}_${Math.random().toString(36).slice(2,10)}`; }
 
-    // 3) Siapkan entri histori
+    // 3) Simpan/repair file di IndexedDB (store pdfBlobs, key=contentHash)
+    //    IMPORTANT: ini yang mencegah dobel — pakai put(overwrite), bukan add.
+    try {
+      await saveBlobByHash(file, contentHash);
+    } catch (err) {
+      console.warn("IndexedDB gagal:", err);
+      showToast("Gagal simpan PDF ke perangkat. Coba ulang.", 5000, "warn");
+      return;
+    }
+
+    // 4) Baru update histori (dedupe hanya untuk localStorage)
     const unitKerjaVal  = (typeof unitKerja === "string" ? unitKerja : (document.querySelector("#unitKerja")?.value || "")) || "";
     const tanggalRawVal = (typeof tanggalRaw  === "string" ? tanggalRaw  : (document.querySelector("#tanggalPekerjaan")?.value || "")) || "";
     const namaUkerBersih = (typeof stripLeadingColon === "function" ? (stripLeadingColon(unitKerjaVal) || "-") : (unitKerjaVal || "-"));
@@ -464,35 +482,17 @@ if (copyBtn) {
     const histori = JSON.parse(localStorage.getItem('pdfHistori')) || [];
     const exists = histori.some(x => x.contentHash === contentHash);
 
-    // 4) Jika sudah ada ⇒ 1 toast biru (info), selesai
-    if (exists) {
-      showToast("ℹ Sudah ada di histori", 3000, "info");
-      return;
+    if (!exists) {
+      histori.push(newEntry);
+      localStorage.setItem('pdfHistori', JSON.stringify(histori));
+      showToast("Berhasil disimpan ke histori.", 3000, "success");
+    } else {
+      // Histori sudah ada, tapi blob sudah di-repair/overwrite
+      showToast("Histori sudah ada. File diperbarui di perangkat.", 3000, "info");
     }
-
-    // 5) Belum ada ⇒ simpan ke histori (localStorage), lalu coba simpan file ke IDB
-    histori.push(newEntry);
-    localStorage.setItem('pdfHistori', JSON.stringify(histori));
-
-    const TIMEOUT_MS = 3000; // 3s batas tunggu supaya gak lama
-    try {
-      await Promise.race([
-        savePdfToIndexedDB_keepSchema(file, { contentHash }),  // simpan file asli + hash
-        new Promise((_, rej) => setTimeout(() => rej(new Error("IDB timeout")), TIMEOUT_MS))
-      ]);
-
-      // Sukses penuh ⇒ 1 toast hijau
-      showToast("✔ Berhasil disimpan ke histori", 3000, "success");
-
-    } catch (err) {
-      console.warn("IndexedDB gagal/timeout:", err);
-      // Histori sudah tersimpan, tapi file asli gagal ⇒ 1 toast kuning
-      showToast("⚠ Histori disimpan. File PDF asli gagal disimpan (Refresh Page & Input kembali file yang sama).", 5000, "warn");
-    }
-
   } catch (err) {
     console.error("Copy handler error:", err);
-    showToast(`❌ Error: ${err?.message || err}`, 4500, "warn");
+    showToast(`Error: ${err?.message || err}`, 4500, "warn");
   }
 });
 

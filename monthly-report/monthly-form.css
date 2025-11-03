@@ -22,7 +22,7 @@ body[data-page="monthly"]{
 
   --btn-h:40px;
   --btn-r:10px;
-  --btn-pad-x:14px;
+  --btn-pad-x:25px;
 
   /* colors */
   --border:#e5e7eb;
@@ -37,14 +37,7 @@ body[data-page="monthly"]{
 /* Guard: cegah konten meluber saat sidebar hidden */
 body[data-page="monthly"] .dashboard .main{ min-width:0; }
 
-/* ---- Header kecil (ikon toggle dsb.) ---- */
-body[data-page="monthly"] .dashboard-header{ display:flex; align-items:center; gap:12px; }
-body[data-page="monthly"] .dashboard-header h1{ flex:1; text-align:center; }
-body[data-page="monthly"] .btn.icon{
-  width:40px; height:40px; padding:0;
-  display:inline-flex; align-items:center; justify-content:center;
-  border-radius:var(--btn-r);
-}
+
 
 /* =========================================================
    Grid & Field
